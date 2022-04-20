@@ -25,10 +25,26 @@ def update(frameNum, img, grid, N, gamma):
  
     newGrid = grid.copy()
     for i in range(N):
+        rndnr = random.random()
         if grid[i] == 1:
-            rndnr = random.random()
-
+            if rndnr <= gamma:
+                newGrid[i] = 0
+        else:
+            sum = grid[(i-1)%N] + grid[(i+1)%N]
+            if sum >= 1:
+                if rndnr > gamma:
+                    newGrid[i] = 1
     # update data
     img.set_data(newGrid)
     grid[:] = newGrid[:]
     return img,
+
+def main():
+    parser = argparse.ArgumentParser(description="Runs Conway's Game of Life simulation.")
+    parser.add_argument('--grid-size', dest='N', required=False)
+    
+    args = parser.parse_args()
+    # set grid size
+    N = 100
+    if args.N and int(args.N) > 8:
+        N = int(args.N)
