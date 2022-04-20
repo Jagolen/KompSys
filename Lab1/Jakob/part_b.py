@@ -42,9 +42,28 @@ def update(frameNum, img, grid, N, gamma):
 def main():
     parser = argparse.ArgumentParser(description="Runs Conway's Game of Life simulation.")
     parser.add_argument('--grid-size', dest='N', required=False)
-    
+    parser.add_argument('--mov-file', dest='movfile', required=False)
+    parser.add_argument('--one', action='store_true', required=False)
+    parser.add_argument('--interval', dest='interval', required=False)
+
+
     args = parser.parse_args()
     # set grid size
     N = 100
     if args.N and int(args.N) > 8:
         N = int(args.N)
+
+    # set animation update interval
+    updateInterval = 50
+    if args.interval:
+        updateInterval = int(args.interval)
+
+    # declare grid
+    grid = np.array([])
+
+    if args.one:
+        grid = np.zeros(N*N).reshape(N,N)
+        OneInfected(grid)
+# call main
+if __name__ == '__main__':
+    main()
