@@ -26,16 +26,16 @@ def update(frameNum, img, grid, N, gamma):
     newGrid = grid.copy()
     for i in range(N):
         rndnr = random.random()
-        if grid[i] == 1:
+        if grid[0][i] == 1:
             if rndnr <= gamma:
-                newGrid[i] = 0
+                newGrid[0][i] = 0
         else:
-            sum = grid[(i-1)%N] + grid[(i+1)%N]
+            sum = grid[0][(i-1)%N] + grid[0][(i+1)%N]
             if sum >= 1:
                 if rndnr > gamma:
-                    newGrid[i] = 1
+                    newGrid[0][i] = 1
     # update data
-    img.set_data(newGrid)
+    img.set_data(newGrid[:])
     grid[:] = newGrid[:]
     return img,
 
@@ -68,7 +68,7 @@ def main():
     grid = grid.reshape((1,N))
     fig, ax = plt.subplots()
     img = ax.imshow(grid, vmin=0, vmax=1, interpolation='nearest')
-    ani = animation.FuncAnimation(fig, update, fargs=(img, grid[0], N, gamma, ),
+    ani = animation.FuncAnimation(fig, update, fargs=(img, grid, N, gamma, ),
                                   frames = 10,
                                   interval=updateInterval,
                                   save_count=50)
