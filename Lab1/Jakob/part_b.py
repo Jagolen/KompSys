@@ -17,7 +17,7 @@ def randomGrid(N):
 
 def OneInfected(N):
     mid = N//2 + 1
-    array = np.zeros((N,1))
+    array = np.zeros((N),dtype=int)
     array[mid] = 1
     return array
 
@@ -50,6 +50,7 @@ def main():
     args = parser.parse_args()
     # set grid size
     N = 100
+    gamma = 0.3
     if args.N and int(args.N) > 8:
         N = int(args.N)
 
@@ -60,10 +61,23 @@ def main():
 
     # declare grid
     grid = np.array([])
+    grid = OneInfected(N)
 
-    if args.one:
-        grid = np.zeros(N*N).reshape(N,N)
-        OneInfected(grid)
+# set up animation
+
+    grid = grid.reshape((1,N))
+    fig, ax = plt.subplots()
+    img = ax.imshow(grid, vmin=0, vmax=1, interpolation='nearest')
+    ani = animation.FuncAnimation(fig, update, fargs=(img, grid[0], N, gamma, ),
+                                  frames = 10,
+                                  interval=updateInterval,
+                                  save_count=50)
+ 
+    # # of frames?
+    # set output file
+    if args.movfile:
+        ani.save(args.movfile, fps=30, extra_args=['-vcodec', 'libx264'])
+    plt.show()
 # call main
 if __name__ == '__main__':
     main()
