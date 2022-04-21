@@ -50,7 +50,7 @@ def main():
     args = parser.parse_args()
     # set grid size
     N = 100
-    gamma = 0.3
+    gamma = 0.5
     if args.N and int(args.N) > 8:
         N = int(args.N)
 
