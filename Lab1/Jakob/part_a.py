@@ -13,7 +13,7 @@ vals = [Fire, Ready, Resting]
 def randomGrid(N):
  
     """returns a grid of NxN random values"""
-    return np.random.choice(vals, N*N, p=[0.01, 0.99, 0]).reshape(N, N)
+    return np.random.choice(vals, N*N, p=[0.3, 0.7, 0]).reshape(N, N)
 
 def manualgrid(grid):
     print("x and y: ")
