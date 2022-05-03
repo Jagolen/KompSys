@@ -10,6 +10,7 @@ import numpy as np
 
 #https://github.com/mwharrisjr/Game-of-Life/blob/master/script/main.py
 
+
 def clear_console():
     """
     Clears the console using a system command based on the user's operating system.
@@ -92,8 +93,12 @@ def print_grid(rows, cols, grid, generation):
         for col in range(cols):
             if grid[row][col] == 0:
                 output_str += ". "
-            else:
+            elif grid[row][col] == 1:
                 output_str += "@ "
+            elif grid[row][col] == 3:
+                output_str += "X "
+            else:
+                output_str += "_ "
         output_str += "\n\r"
     print(output_str, end=" ")
 
@@ -125,11 +130,26 @@ def create_next_grid(rows, cols, grid, next_grid, gamma, case):
                     next_grid[row][col] = 0
                 
             #If infected
-            else:
+            elif grid[row][col] == 1:
                 if random.random()<gamma:
-                    next_grid[row][col] = 0
+                    if case == 3:
+                        next_grid[row][col] = 2
+                    else:
+                        next_grid[row][col] = 0
+                elif case == 3 and random.random()<beta:
+                    next_grid[row][col] = 3
                 else:
                     next_grid[row][col] = 1
+            #If immune
+            elif grid[row][col] == 2:
+                if random.random()<gamma/2:
+                    next_grid[row][col] = 0
+                else:
+                    next_grid[row][col] = 2
+            else:
+                next_grid[row][col] = 3
+
+
 
 
 
@@ -222,6 +242,7 @@ def plot_fig(rows, cols, grid):
     a = np.where(0 < npgrid, 3 - npgrid, npgrid)
     plt.imshow(a, cmap="Greys", origin = 'lower')
 
+beta = 0.5
 
 def run_game():
     """
@@ -232,14 +253,16 @@ def run_game():
     case = int(input())
 
     clear_console()
-    print(f'Enter 0 for continous simulation, 1 for plots:\n')
+    print(f'Enter 0 for continous simulation, 1 for statistics, 2 for plots:\n')
     runtype = int(input())
 
 
 
     #set variables
-    gamma = [0.5, 0.475, 0.45, 0.4]
-    p = [0.1, 0.2, 0.4]
+    #gamma = [0.6, 0.5, 0.4, 0.3]
+    gamma = [0.55, 0.5, 0.48, 0.47, 0.46, 0.45, 0.4]
+    p = [0.02, 0.05, 0.1, 0.2, 0.8]
+    
     # Get the number of rows and columns for the A Firing Brain grid
     if case == 3:
         rows = 40
@@ -267,7 +290,7 @@ def run_game():
             #        break
             print_grid(rows, cols, current_generation, gen)
             if case == 3:
-                create_next_grid(rows, cols, current_generation, next_generation, 0.84, case)
+                create_next_grid(rows, cols, current_generation, next_generation, 0.75, case)
             else:
                 create_next_grid(rows, cols, current_generation, next_generation, gamma[2], case)
             time.sleep(1 / 5.0)
@@ -293,18 +316,22 @@ def run_game():
                 prob[i] = 1 - prob[i]/100 #normalize
 
             plt.plot(gamma, prob)
+            plt.xlabel("gamma")
+            plt.ylabel("probability of dicease surviving")
+            plt.title("Average probability of dicease surviving for 500 timesteps")
             plt.show()
             return input("<Enter> to exit or r to run again: ")
         else:
+            iter = 1000
             if case == 3:
                 gamma = [0.82, 0.83, 0.84, 0.845, 0.85] 
                 generations = 500
             for j in range(0, len(p)):
+                print(f'iteration {j}')
                 prob = [0]*len(gamma)
                 for i in range(0, len(gamma)):
-                    print(f'iteration {i}')
-                    for k in range(10):
-                        print(f'{k}\n')
+                    
+                    for k in range(iter):
                         current_generation = create_initial_grid(rows, cols, p[j], case)
                         next_generation = create_initial_grid(rows, cols, p[j], case)
                         gen = 1
@@ -312,9 +339,34 @@ def run_game():
                             create_next_grid(rows, cols, current_generation, next_generation, gamma[i], case)
                             current_generation, next_generation = next_generation, current_generation
                         prob[i] += 1 if firing_count(rows, cols, current_generation) == 0 else 0 #probability of disease having died out
-                    prob[i] = 1 - prob[i]/10 #normalize
+                    prob[i] = 1 - prob[i]/iter #normalize
                 plt.plot(gamma, prob)
+            plt.xlabel("gamma")
+            plt.ylabel("probability of dicease surviving")
+            plt.title("Average probability of dicease surviving for 500 timesteps")
             plt.legend(p)
+            plt.show()
+            return input("<Enter> to exit or r to run again: ")
+    elif runtype == 2:
+        generations = 500
+        if case == 1:
+            for i in range(0, len(gamma)):
+                print(f'iteration {i}')
+                infected = [0]*generations
+                for j in range(100):
+                    current_generation = create_initial_grid(rows, cols, p, case)
+                    next_generation = create_initial_grid(rows, cols, p, case)
+                    gen = 1
+                    for gen in range(1, generations + 1):
+                        create_next_grid(rows, cols, current_generation, next_generation, gamma[i], case)
+                        current_generation, next_generation = next_generation, current_generation
+                        infected[gen-1] += firing_count(rows, cols, current_generation) #number of infected cells for each timestep
+                infected[:] = [x/100 for x in infected] #normalize
+                plt.plot(range(generations), infected)
+            plt.legend(gamma)
+            plt.xlabel("time")
+            plt.ylabel("number of infected cells")
+            plt.title("Average number of infected cells over 500 timesteps for different gamma")
             plt.show()
             return input("<Enter> to exit or r to run again: ")
 
