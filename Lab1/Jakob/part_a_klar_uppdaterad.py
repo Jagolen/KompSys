@@ -57,12 +57,14 @@ def manualgrid(grid):
     if r == 'y':
         manualgrid(grid)
  
-def update(frameNum, img, grid, N):
+def update(frameNum, img, grid, N, pictime):
     
     # copy grid since we require 8 neighbors
     # for calculation and we go line by line
-    #time.sleep(3)
+    if pictime == frameNum:
+        time.sleep(99999)
     newGrid = grid.copy()
+    print(frameNum)
     for i in range(N):
         for j in range(N):
  
@@ -112,12 +114,18 @@ def main():
     parser.add_argument('--motormur', action='store_true', required=False)
     parser.add_argument('--glasogon', action='store_true', required=False)
     parser.add_argument('--trakig', action='store_true', required=False)
+    parser.add_argument('--pic', dest='pictime', required=False)
     args = parser.parse_args()
      
     # set grid size
     N = 100
     if args.N and int(args.N) > 8:
         N = int(args.N)
+    
+    # take a picture
+    pictime = -1
+    if args.pictime:
+        pictime = int(args.pictime)
          
     # set animation update interval
     updateInterval = 50
@@ -164,17 +172,17 @@ def main():
     # set up animation
     fig, ax = plt.subplots()
     img = ax.imshow(grid, vmin=0, vmax=1, interpolation='nearest')
-    ani = animation.FuncAnimation(fig, update, fargs=(img, grid, N, ),
-                                  frames = 10,
+    ani = animation.FuncAnimation(fig, update, fargs=(img, grid, N, pictime, ),
+                                  frames = 10000,
                                   interval=updateInterval,
-                                  save_count=50)
+                                  save_count=50000)
  
     # # of frames?
     # set output file
     if args.movfile:
         ani.save(args.movfile, fps=30, extra_args=['-vcodec', 'libx264'])
     plt.show()
- 
+
 # call main
 if __name__ == '__main__':
     main()
