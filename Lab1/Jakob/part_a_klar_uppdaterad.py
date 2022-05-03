@@ -42,8 +42,8 @@ def glas(grid):
     grid[5,1] = grid[4,1] = grid[3,2] = grid[2,3] = grid[4,4] = grid[1,5] = grid[4,7] = grid[1,8] = grid[4,8] = grid[2,10] = 1
 
 def trakig(grid):
-    grid[0,1] = grid[1,1] = 1
-    grid[0,0] = grid[1,0] = 0
+    grid[2,3] = grid[3,3] = 1
+    grid[2,2] = grid[3,2] = 0
 
 def manualgrid(grid):
     print("x and y: ")
@@ -63,8 +63,8 @@ def update(frameNum, img, grid, N, pictime):
     # for calculation and we go line by line
     if pictime == frameNum:
         time.sleep(99999)
+    time.sleep(0.5)
     newGrid = grid.copy()
-    print(frameNum)
     for i in range(N):
         for j in range(N):
  
@@ -173,9 +173,9 @@ def main():
     fig, ax = plt.subplots()
     img = ax.imshow(grid, vmin=0, vmax=1, interpolation='nearest')
     ani = animation.FuncAnimation(fig, update, fargs=(img, grid, N, pictime, ),
-                                  frames = 10000,
+                                  frames = 10,
                                   interval=updateInterval,
-                                  save_count=50000)
+                                  save_count=50)
  
     # # of frames?
     # set output file
