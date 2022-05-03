@@ -110,8 +110,8 @@ def main():
     parser.add_argument('--sne', action='store_true', required=False)
     parser.add_argument('--spindel', action='store_true', required=False)
     parser.add_argument('--motormur', action='store_true', required=False)
-    parser.add_argument('--glasögon', action='store_true', required=False)
-    parser.add_argument('--tråkig', action='store_true', required=False)
+    parser.add_argument('--glasogon', action='store_true', required=False)
+    parser.add_argument('--trakig', action='store_true', required=False)
     args = parser.parse_args()
      
     # set grid size
@@ -149,11 +149,11 @@ def main():
         grid = np.full((N,N),0.5)
         mur(grid)
 
-    elif args.glasögon:
+    elif args.glasogon:
         grid = np.full((N,N),0.5)
         glas(grid)
     
-    elif args.tråkig:
+    elif args.trakig:
         grid = np.full((N,N),0.5)
         trakig(grid)
 
