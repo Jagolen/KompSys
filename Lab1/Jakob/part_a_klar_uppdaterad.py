@@ -1,7 +1,5 @@
 # https://www.geeksforgeeks.org/conways-game-life-python-implementation/
 
-
-# Python code to implement Conway's Game Of Life
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,6 +12,8 @@ Ready = 0.5
 Resting = 0
 vals = [Fire, Ready, Resting]
  
+
+# Different grid types
 def randomGrid(N):
  
     """returns a grid of NxN random values"""
@@ -46,6 +46,8 @@ def trakig(grid):
     grid[2,2] = grid[3,2] = 0
 
 def manualgrid(grid):
+    # Manual grid configuration: Choose position and if it should be firing or resting
+    # All positions not defined are set to ready
     print("x and y: ")
     x,y = input().split()
     x,y = int(x), int(y)
@@ -56,14 +58,17 @@ def manualgrid(grid):
     r = input()
     if r == 'y':
         manualgrid(grid)
- 
+
+#Function to take a time step
+
 def update(frameNum, img, grid, N, pictime):
     
-    # copy grid since we require 8 neighbors
-    # for calculation and we go line by line
+    # Freezes the plot after a certain amount of time steps
     if pictime == frameNum:
         time.sleep(99999)
-    time.sleep(0.5)
+
+    # copy grid since we require 8 neighbors
+    # for calculation and we go line by line
     newGrid = grid.copy()
     for i in range(N):
         for j in range(N):
@@ -79,7 +84,7 @@ def update(frameNum, img, grid, N, pictime):
             
             tot = list.count(1)
  
-            # apply Conway's rules
+            # apply the rules
             if grid[i, j]  == 0.5:
                 if tot == 2:
                     newGrid[i, j] = 1
@@ -98,23 +103,20 @@ def update(frameNum, img, grid, N, pictime):
 # main() function
 def main():
  
-    # Command line args are in sys.argv[1], sys.argv[2] ..
-    # sys.argv[0] is the script name itself and can be ignored
-    # parse arguments
+    # setting up arguments
     parser = argparse.ArgumentParser(description="Runs Conway's Game of Life simulation.")
  
-    # add arguments
+    # different arguments (grid size, starting configuration, runtime)
     parser.add_argument('--grid-size', dest='N', required=False)
-    parser.add_argument('--mov-file', dest='movfile', required=False)
     parser.add_argument('--interval', dest='interval', required=False)
     parser.add_argument('--manual', action='store_true', required=False)
     parser.add_argument('--stationary', action='store_true', required=False)
-    parser.add_argument('--sne', action='store_true', required=False)
-    parser.add_argument('--spindel', action='store_true', required=False)
-    parser.add_argument('--motormur', action='store_true', required=False)
-    parser.add_argument('--glasogon', action='store_true', required=False)
-    parser.add_argument('--trakig', action='store_true', required=False)
-    parser.add_argument('--pic', dest='pictime', required=False)
+    parser.add_argument('--sne', action='store_true', required=False) # Diagonally moving shape
+    parser.add_argument('--spindel', action='store_true', required=False) # Moves sideways
+    parser.add_argument('--motormur', action='store_true', required=False) # Moves sideways and shoots particles behind which quickly vanishes
+    parser.add_argument('--glasogon', action='store_true', required=False) # Not very usefull
+    parser.add_argument('--trakig', action='store_true', required=False) # Simple moving shape
+    parser.add_argument('--pic', dest='pictime', required=False) # Chooses when the plot should be frozen so a picture can be taken
     args = parser.parse_args()
      
     # set grid size
@@ -122,7 +124,8 @@ def main():
     if args.N and int(args.N) > 8:
         N = int(args.N)
     
-    # take a picture
+    # Freeze the plots after a defined number of time steps
+    # No defined time steps means the plots will never freeze
     pictime = -1
     if args.pictime:
         pictime = int(args.pictime)
@@ -135,7 +138,7 @@ def main():
     # declare grid
     grid = np.array([])
  
-    # check if "manual" demo flag is specified
+    # check the different configurations
     
     if args.manual:
         grid = np.full((N,N),0.5)
@@ -165,8 +168,7 @@ def main():
         grid = np.full((N,N),0.5)
         trakig(grid)
 
-    else:   # populate grid with random on/off -
-            # more off than on
+    else:   # No defined grid will give a random grid
         grid = randomGrid(N)
  
     # set up animation
@@ -176,11 +178,6 @@ def main():
                                   frames = 10,
                                   interval=updateInterval,
                                   save_count=50)
- 
-    # # of frames?
-    # set output file
-    if args.movfile:
-        ani.save(args.movfile, fps=30, extra_args=['-vcodec', 'libx264'])
     plt.show()
 
 # call main
