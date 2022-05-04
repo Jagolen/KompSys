@@ -51,20 +51,20 @@ def resize_console(rows, cols):
 
 def create_initial_grid(rows, cols, p, case):
     """
-    Creates a random list of lists that contains 1s and 0s to represent the cells in A Firing Brain.
-    :param rows: Int - The number of rows that the A Firing Brain grid will have
-    :param cols: Int - The number of columns that the A Firing Brain grid will have
+    Creates a random list of lists that contains 1s and 0s to represent the cells in Epedemic spread.
+    :param rows: Int - The number of rows that the Epedemic spread grid will have
+    :param cols: Int - The number of columns that the Epedemic spread grid will have
     :return: Int[][] - A list of lists containing 1s for firing cells and 0s for ready cells
     """
-    if case == 1:
+    if case == 1: #case 1 is only one infected cell in middle
         grid = [[0]*cols]
         grid[0][int(cols/2)] = 1
-    else:
+    else: #otherwise randomly spread, row will be set to one
         grid = []
         for row in range(rows):
             grid_rows = []
             for col in range(cols):
-                # Generate a random number and based on that decide whether to add a live or dead cell to the grid
+                # Generate a random number and based on that decide whether to add an infected cell to the grid
                 if random.random() <= p:
                     grid_rows += [1]
                 else:
@@ -75,11 +75,11 @@ def create_initial_grid(rows, cols, p, case):
 
 def print_grid(rows, cols, grid, generation):
     """
-    Prints to console the A Firing Brain grid
-    :param rows: Int - The number of rows that the A Firing Brain grid has
-    :param cols: Int - The number of columns that the A Firing Brain grid has
-    :param grid: Int[][] - The list of lists that will be used to represent the A Firing Brain grid
-    :param generation: Int - The current generation of the A Firing Brain grid
+    Prints to console the Epedemic spread grid
+    :param rows: Int - The number of rows that the Epedemic spread grid has
+    :param cols: Int - The number of columns that the Epedemic spread grid has
+    :param grid: Int[][] - The list of lists that will be used to represent the Epedemic spread grid
+    :param generation: Int - The current generation of the Epedemic spread grid
     """
 
     clear_console()
@@ -92,103 +92,72 @@ def print_grid(rows, cols, grid, generation):
     for row in range(rows):
         for col in range(cols):
             if grid[row][col] == 0:
-                output_str += ". "
-            elif grid[row][col] == 1:
-                output_str += "@ "
-            elif grid[row][col] == 3:
-                output_str += "X "
+                output_str += ". " #suceptible
             else:
-                output_str += "_ "
+                output_str += "@ " #infected
         output_str += "\n\r"
     print(output_str, end=" ")
 
 
 def create_next_grid(rows, cols, grid, next_grid, gamma, case):
     """
-    Analyzes the current generation of the A Firing Brain grid and determines what cells live and die in the next
-    generation of the A Firing Brain grid.
-    :param rows: Int - The number of rows that the A Firing Brain grid has
-    :param cols: Int - The number of columns that the A Firing Brain grid has
-    :param grid: Int[][] - The list of lists that will be used to represent the current generation Game of Life grid
-    :param next_grid: Int[][] - The list of lists that will be used to represent the next generation of the Game of Life
+    Analyzes the current generation of the Epedemic spread grid and determines what cells live and die in the next
+    generation of the Epedemic spread grid.
+    :param rows: Int - The number of rows that the Epedemic spread grid has
+    :param cols: Int - The number of columns that the Epedemic spread grid has
+    :param grid: Int[][] - The list of lists that will be used to represent the current generation Epedemic spread grid
+    :param next_grid: Int[][] - The list of lists that will be used to represent the next generation of the Epedemic spread
     grid
     """
 
     for row in range(rows):
         for col in range(cols):
-            # Get the number of firing cells adjacent to the cell at grid[row][col]
+            # Get the number of infected adjacent to the cell at grid[row][col]
             infected_neighbors = get_infected_neighbors(row, col, rows, cols, grid, case)
 
             #If suceptible 
             if grid[row][col] == 0:
-                if infected_neighbors:
+                if infected_neighbors: #if cell has infected neighbours it will be infected with chance 1-gamma
                     if random.random()<1-gamma:
                         next_grid[row][col] = 1
-                    else:
+                    else: #otherwise stay suceptible
                         next_grid[row][col] = 0
-                else:
+                else: #otherwise stay suceptible
                     next_grid[row][col] = 0
-                
-            #If infected
-            elif grid[row][col] == 1:
-                if random.random()<gamma:
-                    if case == 3:
-                        next_grid[row][col] = 2
-                    else:
-                        next_grid[row][col] = 0
-                elif case == 3 and random.random()<beta:
-                    next_grid[row][col] = 3
-                else:
+            #If infected        
+            else: 
+                if random.random()<gamma: #recover with chance gamma
+                    next_grid[row][col] = 0
+                else: #stay infected
                     next_grid[row][col] = 1
-            #If immune
-            elif grid[row][col] == 2:
-                if random.random()<gamma/2:
-                    next_grid[row][col] = 0
-                else:
-                    next_grid[row][col] = 2
-            else:
-                next_grid[row][col] = 3
-
-
-
 
 
 
 def get_infected_neighbors(row, col, rows, cols, grid, case):
     """
-    Counts the number of live cells surrounding a center cell at grid[row][cell].
+    Counts the number of infected cells surrounding a center cell at grid[row][cell].
     :param row: Int - The row of the center cell
     :param col: Int - The column of the center cell
-    :param rows: Int - The number of rows that the Game of Life grid has
-    :param cols: Int - The number of columns that the Game of Life grid has
-    :param grid: Int[][] - The list of lists that will be used to represent the Game of Life grid
-    :return: Int - The number of live cells surrounding the cell at grid[row][cell]
+    :param rows: Int - The number of rows that the Epedemic spread grid has
+    :param cols: Int - The number of columns that the Epedemic spread grid has
+    :param grid: Int[][] - The list of lists that will be used to represent the Epedemic spread grid
+    :return: Int - The number of infected cells surrounding the cell at grid[row][cell]
     """
 
-
-
-    if case == 3:
-        infected_sum = 0
-        for i in range(-1, 2):
-            for j in range(-1, 2):
-                # Make sure to count the center cell located at grid[row][col]
-                if not (i == 0 and j == 0):
-                    # Using the modulo operator (%) the grid wraps around
-                    infected_sum += 1 if (grid[((row + i) % rows)][((col + j) % cols)] == 1) else 0
-    else:
-        infected_sum = 0
-        infected_sum += grid[row][(col-1) % cols]
-        infected_sum += grid[row][(col+1) % cols]
+    #neighbours are only left and right
+    infected_sum = 0
+    infected_sum += grid[row][(col-1) % cols]
+    infected_sum += grid[row][(col+1) % cols] 
     return infected_sum
 
 
 def grid_changing(rows, cols, grid, next_grid):
     """
-    Checks to see if the current generation Game of Life grid is the same as the next generation Game of Life grid.
-    :param rows: Int - The number of rows that the Game of Life grid has
-    :param cols: Int - The number of columns that the Game of Life grid has
-    :param grid: Int[][] - The list of lists that will be used to represent the current generation Game of Life grid
-    :param next_grid: Int[][] - The list of lists that will be used to represent the next generation of the Game of Life
+    Checks to see if the current generation Epedemic spread grid is the same as the next generation Epedemic spread grid.
+    :param rows: Int - The number of rows that the Epedemic spread grid has
+    :param cols: Int - The number of columns that the Epedemic spread grid has
+    :param grid: Int[][] - The list of lists that will be used to represent the current generation Epedemic spread grid
+    :param next_grid: Int[][] - The list of lists that will be used to represent the next generation of the Epedemic spread
     grid
     :return: Boolean - Whether the current generation grid is the same as the next generation grid
     """
@@ -201,35 +170,16 @@ def grid_changing(rows, cols, grid, next_grid):
     return False
 
 
-def get_integer_value(prompt, low, high):
+def firing_count(rows, cols, grid): 
     """
-    Asks the user for integer input and between given bounds low and high.
-    :param prompt: String - The string to prompt the user for input with
-    :param low: Int - The low bound that the user must stay within
-    :param high: Int - The high bound that the user must stay within
-    :return: The valid input value that the user entered
+    counts number of cells in grid with value 1
     """
-
-    while True:
-        try:
-            value = int(input(prompt))
-        except ValueError:
-            print("Input was not a valid integer value.")
-            continue
-        if value < low or value > high:
-            print("Input was not inside the bounds (value <= {0} or value >= {1}).".format(low, high))
-        else:
-            break
-    return value
-
-def firing_count(rows, cols, grid):
     sum = 0
 
     for i in range(rows):
         sum += grid[i].count(1)
 
     return sum
-
 
 
 def plot_fig(rows, cols, grid):
@@ -242,14 +192,13 @@ def plot_fig(rows, cols, grid):
     a = np.where(0 < npgrid, 3 - npgrid, npgrid)
     plt.imshow(a, cmap="Greys", origin = 'lower')
 
-beta = 0.5
 
 def run_game():
     """
-    Asks the user for input to setup the A Firing Brain to run for a given number of generations.
+    Asks the user for input to setup the Epedemic spread to run for a given number of generations.
     """
     clear_console()
-    print(f'Enter 1 for case 1, 2 for case 2, 3 for case 3:\n')
+    print(f'Enter 1 for case 1, 2 for case 2:\n')
     case = int(input())
 
     clear_console()
@@ -260,52 +209,47 @@ def run_game():
 
     #set variables
     #gamma = [0.6, 0.5, 0.4, 0.3]
-    gamma = [0.55, 0.5, 0.48, 0.47, 0.46, 0.45, 0.4]
-    p = [0.02, 0.05, 0.1, 0.2, 0.8]
+    gamma = [0.55, 0.5, 0.48, 0.47, 0.46, 0.45, 0.4] #chosen values for gamma
+    p = [0.02, 0.05, 0.1, 0.2, 0.8] #chosen values for p
     
-    # Get the number of rows and columns for the A Firing Brain grid
-    if case == 3:
-        rows = 40
-        cols = rows
-    else:
-        rows = 1
-        cols = 100
+    # Get the number of rows and columns for the Epedemic spread grid
+
+    rows = 1
+    cols = 100
     clear_console()
 
-    # Get the number of generations that the A Firing Brain should run for
-    
+    # Get the number of generations that the Epedemic spread should run for
 
-
-    # Run A Firing Brain sequence
+    # Run Epedemic spread sequence
     if runtype == 0:
         resize_console(rows, cols)
 
-        generations = 500
-        # Create the initial random A Firing Brain grids
+        generations = 500 #simulation is capped at this number of generations, can be changed
+
+        # Create the initial random Epedemic spread grids
         current_generation = create_initial_grid(rows, cols, p[0], case)
         next_generation = create_initial_grid(rows, cols, p[0], case)
+
         gen = 1
         for gen in range(1, generations + 1):
-            #if not grid_changing(rows, cols, current_generation, next_generation):
-            #        break
-            print_grid(rows, cols, current_generation, gen)
-            if case == 3:
-                create_next_grid(rows, cols, current_generation, next_generation, 0.75, case)
-            else:
-                create_next_grid(rows, cols, current_generation, next_generation, gamma[2], case)
+            print_grid(rows, cols, current_generation, gen) #print grid
+            create_next_grid(rows, cols, current_generation, next_generation, gamma[2], case) #create next grid
+
             time.sleep(1 / 5.0)
-            current_generation, next_generation = next_generation, current_generation
+            current_generation, next_generation = next_generation, current_generation #assign current gen as next gen
 
         print_grid(rows, cols, current_generation, gen)
         return input("<Enter> to exit or r to run again: ")
-    elif runtype == 1:
+
+    elif runtype == 1: #for aquiring relative statistics
         generations = 500
         if case == 1:
-            prob = [0]*len(gamma)
-
-            for i in range(0, len(gamma)):
+            prob = [0]*len(gamma) #probability list
+            iter = 100 #number of iterations for statistics to be averaged over
+            for i in range(0, len(gamma)): #iterate over gammas
                 print(f'iteration {i}')
-                for j in range(100):
+                for j in range(iter): #run for iter times
+                    #initial grid
                     current_generation = create_initial_grid(rows, cols, p, case)
                     next_generation = create_initial_grid(rows, cols, p, case)
                     gen = 1
@@ -313,8 +257,9 @@ def run_game():
                         create_next_grid(rows, cols, current_generation, next_generation, gamma[i], case)
                         current_generation, next_generation = next_generation, current_generation
                     prob[i] += 1 if firing_count(rows, cols, current_generation) == 0 else 0 #probability of disease having died out
-                prob[i] = 1 - prob[i]/100 #normalize
+                prob[i] = 1 - prob[i]/iter #normalize
 
+            #plots
             plt.plot(gamma, prob)
             plt.xlabel("gamma")
             plt.ylabel("probability of dicease surviving")
@@ -322,16 +267,12 @@ def run_game():
             plt.show()
             return input("<Enter> to exit or r to run again: ")
         else:
-            iter = 1000
-            if case == 3:
-                gamma = [0.82, 0.83, 0.84, 0.845, 0.85] 
-                generations = 500
-            for j in range(0, len(p)):
-                print(f'iteration {j}')
+            iter = 1000 #number of iterations for statistics to be aquired over
+            for j in range(0, len(p)): #iterate over length of p
+                print(f'iteration {j}') #print for the sake of my sanity
                 prob = [0]*len(gamma)
-                for i in range(0, len(gamma)):
-                    
-                    for k in range(iter):
+                for i in range(0, len(gamma)): #iterate over gammas length
+                    for k in range(iter): #iter times
                         current_generation = create_initial_grid(rows, cols, p[j], case)
                         next_generation = create_initial_grid(rows, cols, p[j], case)
                         gen = 1
@@ -340,14 +281,16 @@ def run_game():
                             current_generation, next_generation = next_generation, current_generation
                         prob[i] += 1 if firing_count(rows, cols, current_generation) == 0 else 0 #probability of disease having died out
                     prob[i] = 1 - prob[i]/iter #normalize
+                    #plots
                 plt.plot(gamma, prob)
             plt.xlabel("gamma")
-            plt.ylabel("probability of dicease surviving")
-            plt.title("Average probability of dicease surviving for 500 timesteps")
+            plt.ylabel("probability of disease surviving")
+            plt.title("Average probability of disease surviving for 500 timesteps")
             plt.legend(p)
             plt.show()
             return input("<Enter> to exit or r to run again: ")
-    elif runtype == 2:
+
+    elif runtype == 2: #for aquiring another set of statistics
         generations = 500
         if case == 1:
             for i in range(0, len(gamma)):
@@ -369,14 +312,12 @@ def run_game():
             plt.title("Average number of infected cells over 500 timesteps for different gamma")
             plt.show()
             return input("<Enter> to exit or r to run again: ")
-
-
-            
-
+        else:
+            print("runtype 2 does not exist for case 2")
+            return input("<Enter> to exit or r to run again: ")
     
 
-
-# Start the A Firing Brain
+# Start the Epedemic spread
 run = "r"
 while run == "r":
     out = run_game()
