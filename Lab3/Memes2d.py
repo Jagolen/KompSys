@@ -6,7 +6,7 @@ import networkx as nx
 import numpy as np
 import random
 
-G = nx.grid_2d_graph(4,4, [False, False])
+G = nx.grid_2d_graph(4,4, [True, True])
 nx.draw(G)
 plt.show()
 
@@ -23,7 +23,7 @@ p = 0.001
 q = 0.01
 r = 0.01
 
-the_nodes = list(G.nodes)
+the_nodes = list(G)
 print(the_nodes)
 
 iter = 4000
