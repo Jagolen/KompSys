@@ -12,8 +12,9 @@ nx.draw(G)
 plt.show()
 
 
-G2 = nx.read_pajek("Roget.net")
+G2 = nx.read_pajek("YeastS.net")
 G3 = nx.Graph(G2)
+G3.remove_edges_from(nx.selfloop_edges(G3))
 
 nx.draw(G3)
 plt.show()
