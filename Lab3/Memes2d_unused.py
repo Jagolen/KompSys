@@ -8,7 +8,7 @@ import random
 
 gridsize = 4
 
-G = nx.grid_2d_graph(gridsize,gridsize, [True, True])
+G = nx.read_pajek()
 nx.draw(G)
 plt.show()
 
