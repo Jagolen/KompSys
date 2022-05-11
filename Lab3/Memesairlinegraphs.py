@@ -4,9 +4,11 @@ from locale import normalize
 import time
 import os
 import random
+import networkx as nx
 import sys
 import matplotlib.pyplot as plt
 import numpy as np
+from itertools import combinations, groupby
 
 #https://github.com/mwharrisjr/Game-of-Life/blob/master/script/main.py
 
@@ -62,9 +64,11 @@ def create_initial_grid(rows, cols):
         for col in range(cols):
             # Generate a random number and based on that decide whether to add a live or dead cell to the grid
             grid_rows += [0]
+        randbored = len(grid_rows)-1
+        randshared = len(grid_rows)-1
+        grid_rows[randshared] = 1
+        grid_rows[randbored] = 2
         grid += [grid_rows]
-    grid_rows[0] = 1
-    grid_rows[1] = 2
     return grid
 
 
@@ -96,7 +100,7 @@ def print_grid(rows, cols, grid, generation):
     print(output_str, end=" ")
 
 
-def create_next_grid(rows, cols, grid, next_grid, p, q, r):
+def create_next_grid(rows, cols, grid, next_grid, p, q, r, G):
     """
     Resting = 0
     Sharer = 1
@@ -105,6 +109,7 @@ def create_next_grid(rows, cols, grid, next_grid, p, q, r):
 
     for row in range(rows):
         for col in range(cols):
+            neighbors = list(G.neighbors(col))
             #Resting
             if grid[row][col] == 0:
                 if random.random()>p:
@@ -116,14 +121,12 @@ def create_next_grid(rows, cols, grid, next_grid, p, q, r):
                 if random.random()>q:
                     next_grid[row][col] = 1
                 else:
-                    randx = random.randint(-1,1)
-                    randy = random.randint(-1,1)
-                    p_col = (col+randx)%cols
-                    p_row = (row+randy)%rows
-                    if grid[p_row][p_col] == 0:
-                        next_grid[p_row][p_col] = 1
+                    p_col = random.randint(0, len(neighbors)-1)
+                    p_col = neighbors[p_col]
+                    if grid[row][p_col] == 0:
+                        next_grid[row][p_col] = 1
                         next_grid[row][col] = 1
-                    elif grid[p_row][p_col] == 2:
+                    elif grid[row][p_col] == 2:
                         next_grid[row][col] = 2
                     else:
                         next_grid[row][col] = 1
@@ -132,11 +135,9 @@ def create_next_grid(rows, cols, grid, next_grid, p, q, r):
                 if random.random()>r:
                     next_grid[row][col] = 2
                 else:
-                    randx = random.randint(-1,1)
-                    randy = random.randint(-1,1)
-                    p_col = (col+randx)%cols
-                    p_row = (row+randy)%rows
-                    if grid[p_row][p_col] == 0:
+                    p_col = random.randint(0, len(neighbors)-1)
+                    p_col = neighbors[p_col]
+                    if grid[row][p_col] == 0:
                         next_grid[row][col] = 0
                     else:
                         next_grid[row][col] = 2
@@ -227,18 +228,42 @@ def run_game():
     """
     Asks the user for input to setup the A Firing Brain to run for a given number of generations.
     """
+    G2 = nx.read_pajek("Roget.net")
+    G3 = nx.Graph(G2)
 
-    p = 0.007
-    q = 0.07
-    r = 0.04
+    #Remove self references
+    G3.remove_edges_from(nx.selfloop_edges(G3))
+
+    #Remove solo nodes
+    G3.remove_nodes_from(list(nx.isolates(G3)))
+
+    
+    G = nx.convert_node_labels_to_integers(G3)
+
+    #CONNECT EVERYTHING
+    components = dict(enumerate(nx.connected_components(G)))
+    components_combs = combinations(components.keys(), r=2)
+
+    for _, node_edges in groupby(components_combs, key=lambda x: x[0]):
+        node_edges = list(node_edges)
+        random_comps = random.choice(node_edges)
+        source = random.choice(list(components[random_comps[0]]))
+        target = random.choice(list(components[random_comps[1]]))
+        G.add_edge(source, target)
+    #END CONNECT EVERYTHING
+
+    n = nx.number_of_nodes(G)
+    p = 0.01
+    q = 0.01
+    r = 0
 
     # Get the number of rows and columns for the A Firing Brain grid
-    rows = 70
-    cols = 70
+    rows = 1
+    cols = n
     clear_console()
 
     # Get the number of generations that the A Firing Brain should run for
-    iterations = 10000
+    iterations = 20000
 
     #initial generations
     current_generation = create_initial_grid(rows, cols)
@@ -255,7 +280,7 @@ def run_game():
 
 
     for gen in range(1, iterations):
-        create_next_grid(rows, cols, current_generation, next_generation, p, q, r)
+        create_next_grid(rows, cols, current_generation, next_generation, p, q, r, G)
         current_generation, next_generation = next_generation, current_generation
         resting[gen] += state_count(rows, cols, current_generation, 0)
         sharing[gen] += state_count(rows, cols, current_generation, 1)
@@ -269,31 +294,9 @@ def run_game():
     plt.ylabel('Amount of individuals')
     plt.title('State of individuals over time')
     plt.show()
+    print(current_generation)
     return input("<Enter> to exit or r to run again: ")
-    """
-    elif runtype == 2:
-        generations =1000
-        firing = [0]*generations
-        iterations = 100
-        for i in range(iterations):
-            print(f"iteration {i}\n")
-            current_generation = create_initial_grid(rows, cols)
-            next_generation = create_initial_grid(rows, cols)
-            # Run A Firing Brain sequence
-            for gen in range(1, generations + 1):
-                create_next_grid(rows, cols, current_generation, next_generation)
-                current_generation, next_generation = next_generation, current_generation
-                firing[gen-1] += firing_count(rows, cols, current_generation)
-                #firing[gen-1] += current_generation.count(1)
-                #print(f'current count = {current_generation.count(1)}\n')
-        #firing /= 100
-        firing = [i/iterations for i in firing]
-        plt.plot(range(500), firing)
-        plt.show()
-
-
-
-        return input("<Enter> to exit or r to run again: ")"""
+    
 
     
 
