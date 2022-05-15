@@ -1,0 +1,16 @@
+#! /usr/bin/python3
+
+from time import sleep
+import matplotlib.pyplot as plt
+import networkx as nx
+import numpy as np
+import random
+
+G2 = nx.read_pajek("Roget.net")
+G3 = nx.Graph(G2)
+G3.remove_edges_from(nx.selfloop_edges(G3))
+G3.remove_nodes_from(list(nx.isolates(G3)))
+G4 = nx.convert_node_labels_to_integers(G3)
+print(G4.nodes)
+n_node = list(G4.neighbors(60))
+print(n_node)

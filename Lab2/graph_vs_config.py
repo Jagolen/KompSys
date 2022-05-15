@@ -16,10 +16,9 @@ for line in df:
     if line_list[0] == '*Vertices':
         num_vertices = int(line_list[1])
         break
-
-print("num_vertices =", num_vertices)
 real_G = nx.empty_graph(num_vertices)
 
+#add the edges
 reading_edges = False
 for line in df:
     line_list = line.strip().split()
@@ -36,19 +35,21 @@ for line in df:
 
 n = num_vertices
 m = real_G.size()
+
+#Find degree sequence of the airline model
 degree_seq = [val for (node, val) in sorted(real_G.degree(), key=lambda pair: pair[0])]
-print(degree_seq)
 runs = 30
 c_global = np.zeros(runs)
-print(c_global)
 
+#Find the clustering coefficients of the airline model
 air_clustering = nx.transitivity(real_G)
-print(air_clustering)
 
+#Find the clustering coefficients of the random graph
 for i in range(runs):
     H = nx.configuration_model(degree_seq, nx.Graph)
     c_global[i] = nx.transitivity(H)
 
+#plot the boxplots
 plt.boxplot(c_global)
 plt.plot(1,air_clustering,'*')
 plt.xlabel("Configuration Model and real network")
