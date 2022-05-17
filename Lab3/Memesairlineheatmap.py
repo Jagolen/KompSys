@@ -4,10 +4,11 @@ from locale import normalize
 import time
 import os
 import random
+import networkx as nx
 import sys
-from jmespath import search
 import matplotlib.pyplot as plt
 import numpy as np
+from itertools import combinations, groupby
 import seaborn as sns; sns.set_theme()
 
 #https://github.com/mwharrisjr/Game-of-Life/blob/master/script/main.py
@@ -64,8 +65,10 @@ def create_initial_grid(rows, cols):
         for col in range(cols):
             # Generate a random number and based on that decide whether to add a live or dead cell to the grid
             grid_rows += [0]
-        grid_rows[0] = 1
-        grid_rows[500] = 2
+        randbored = len(grid_rows)-1
+        randshared = len(grid_rows)-1
+        grid_rows[randshared] = 1
+        grid_rows[randbored] = 2
         grid += [grid_rows]
     return grid
 
@@ -98,7 +101,7 @@ def print_grid(rows, cols, grid, generation):
     print(output_str, end=" ")
 
 
-def create_next_grid(rows, cols, grid, next_grid, p, q, r):
+def create_next_grid(rows, cols, grid, next_grid, p, q, r, G):
     """
     Resting = 0
     Sharer = 1
@@ -107,6 +110,7 @@ def create_next_grid(rows, cols, grid, next_grid, p, q, r):
 
     for row in range(rows):
         for col in range(cols):
+            neighbors = list(G.neighbors(col))
             #Resting
             if grid[row][col] == 0:
                 if random.random()>p:
@@ -118,7 +122,8 @@ def create_next_grid(rows, cols, grid, next_grid, p, q, r):
                 if random.random()>q:
                     next_grid[row][col] = 1
                 else:
-                    p_col = random.randint(0, cols-1)
+                    p_col = random.randint(0, len(neighbors)-1)
+                    p_col = neighbors[p_col]
                     if grid[row][p_col] == 0:
                         next_grid[row][p_col] = 1
                         next_grid[row][col] = 1
@@ -131,7 +136,8 @@ def create_next_grid(rows, cols, grid, next_grid, p, q, r):
                 if random.random()>r:
                     next_grid[row][col] = 2
                 else:
-                    p_col = random.randint(0, cols-1)
+                    p_col = random.randint(0, len(neighbors)-1)
+                    p_col = neighbors[p_col]
                     if grid[row][p_col] == 0:
                         next_grid[row][col] = 0
                     else:
@@ -223,32 +229,63 @@ def run_game():
     """
     Asks the user for input to setup the A Firing Brain to run for a given number of generations.
     """
+    G2 = nx.read_pajek("Roget.net")
+    G3 = nx.Graph(G2)
 
-    p = 0.001
-    r = 0.01
-    q = 0.01
+    #Remove self references
+    G3.remove_edges_from(nx.selfloop_edges(G3))
 
+    #Remove solo nodes
+    G3.remove_nodes_from(list(nx.isolates(G3)))
 
+    
+    G = nx.convert_node_labels_to_integers(G3)
+
+    #CONNECT EVERYTHING
+    components = dict(enumerate(nx.connected_components(G)))
+    components_combs = combinations(components.keys(), r=2)
+
+    for _, node_edges in groupby(components_combs, key=lambda x: x[0]):
+        node_edges = list(node_edges)
+        random_comps = random.choice(node_edges)
+        source = random.choice(list(components[random_comps[0]]))
+        target = random.choice(list(components[random_comps[1]]))
+        G.add_edge(source, target)
+    #END CONNECT EVERYTHING
+
+    n = nx.number_of_nodes(G)
+    p = 0.007
+    q = 0.07
+    r = 0.04
 
     # Get the number of rows and columns for the A Firing Brain grid
     rows = 1
-    cols = 1000
+    cols = n
     clear_console()
 
+    #initial generations
+    current_generation = create_initial_grid(rows, cols)
+    next_generation = create_initial_grid(rows, cols)
+
     # Get the number of generations that the A Firing Brain should run for
-    iterations = 4000
+    iterations = 3000
     layers = 10
-    qp_values = 21
-    prop_values = 21
+    qp_values = 11
+    prop_values = 11
     qlist = np.around(np.linspace(0, 0.1, qp_values), decimals=5)
-    plist = np.around(np.linspace(0, 0.001, qp_values), decimals=5)
+    plist = np.around(np.linspace(0, 0.01, qp_values), decimals=5)
+    rlist = np.around(np.linspace(0, 0.1, qp_values), decimals=5)
     #lists for tracking statistics
     hm = np.zeros((prop_values-1, qp_values))
     proportions = np.around(np.linspace(0, 1, prop_values), decimals=3)
     proportions = proportions[1:]
-    print("calculating\n")
-    for k, q in enumerate(qlist):
+
+
+    print("calculating...\n")
+    for k, p in enumerate(plist):   #change here
+        print(f"({k+1}/{qp_values})k. lager: ", end="")
         for i in range(layers):
+            print(f"{i+1} ", end="")
             #initial generations
             current_generation = create_initial_grid(rows, cols)
             next_generation = create_initial_grid(rows, cols)
@@ -256,40 +293,17 @@ def run_game():
 
             # Run A Firing Brain sequence
             for gen in range(1, iterations):
-                create_next_grid(rows, cols, current_generation, next_generation, p, q, r)
+                create_next_grid(rows, cols, current_generation, next_generation, p, q, r, G)
                 current_generation, next_generation = next_generation, current_generation
             proportion = state_count(rows, cols, current_generation, 1)/(rows*cols)
             ind = prop_values-(np.searchsorted(proportions, proportion)+2)
             hm[ind, k] += 1
-    ax = sns.heatmap(hm, xticklabels=qlist, yticklabels=np.flip(proportions))
+        print("")
+    ax = sns.heatmap(hm, xticklabels=plist, yticklabels=np.flip(proportions))   # and here
     plt.show()
-
-
     return input("<Enter> to exit or r to run again: ")
-    """
-    elif runtype == 2:
-        generations =1000
-        firing = [0]*generations
-        iterations = 100
-        for i in range(iterations):
-            print(f"iteration {i}\n")
-            current_generation = create_initial_grid(rows, cols)
-            next_generation = create_initial_grid(rows, cols)
-            # Run A Firing Brain sequence
-            for gen in range(1, generations + 1):
-                create_next_grid(rows, cols, current_generation, next_generation)
-                current_generation, next_generation = next_generation, current_generation
-                firing[gen-1] += firing_count(rows, cols, current_generation)
-                #firing[gen-1] += current_generation.count(1)
-                #print(f'current count = {current_generation.count(1)}\n')
-        #firing /= 100
-        firing = [i/iterations for i in firing]
-        plt.plot(range(500), firing)
-        plt.show()
 
-
-
-        return input("<Enter> to exit or r to run again: ")"""
+    
 
     
 

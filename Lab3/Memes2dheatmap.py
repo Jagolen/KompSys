@@ -5,7 +5,6 @@ import time
 import os
 import random
 import sys
-from jmespath import search
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns; sns.set_theme()
@@ -64,9 +63,9 @@ def create_initial_grid(rows, cols):
         for col in range(cols):
             # Generate a random number and based on that decide whether to add a live or dead cell to the grid
             grid_rows += [0]
-        grid_rows[0] = 1
-        grid_rows[500] = 2
         grid += [grid_rows]
+    grid_rows[0] = 1
+    grid_rows[1] = 2
     return grid
 
 
@@ -118,11 +117,14 @@ def create_next_grid(rows, cols, grid, next_grid, p, q, r):
                 if random.random()>q:
                     next_grid[row][col] = 1
                 else:
-                    p_col = random.randint(0, cols-1)
-                    if grid[row][p_col] == 0:
-                        next_grid[row][p_col] = 1
+                    randx = random.randint(-1,1)
+                    randy = random.randint(-1,1)
+                    p_col = (col+randx)%cols
+                    p_row = (row+randy)%rows
+                    if grid[p_row][p_col] == 0:
+                        next_grid[p_row][p_col] = 1
                         next_grid[row][col] = 1
-                    elif grid[row][p_col] == 2:
+                    elif grid[p_row][p_col] == 2:
                         next_grid[row][col] = 2
                     else:
                         next_grid[row][col] = 1
@@ -131,8 +133,11 @@ def create_next_grid(rows, cols, grid, next_grid, p, q, r):
                 if random.random()>r:
                     next_grid[row][col] = 2
                 else:
-                    p_col = random.randint(0, cols-1)
-                    if grid[row][p_col] == 0:
+                    randx = random.randint(-1,1)
+                    randy = random.randint(-1,1)
+                    p_col = (col+randx)%cols
+                    p_row = (row+randy)%rows
+                    if grid[p_row][p_col] == 0:
                         next_grid[row][col] = 0
                     else:
                         next_grid[row][col] = 2
@@ -208,47 +213,43 @@ def state_count(rows, cols, grid, num):
     return sum
 
 
-def plot_fig(rows, cols, grid):
-    """
-    Plots the specified grid
-    """
-
-    fig, ax = plt.subplots()
-    npgrid = np.matrix(grid)
-    a = np.where(0 < npgrid, 3 - npgrid, npgrid)
-    plt.imshow(a, cmap="Greys", origin = 'lower')
-
-
 def run_game():
     """
     Asks the user for input to setup the A Firing Brain to run for a given number of generations.
     """
 
-    p = 0.001
-    r = 0.01
-    q = 0.01
-
-
+    p = 0.007
+    q = 0.07
+    r = 0.04
 
     # Get the number of rows and columns for the A Firing Brain grid
-    rows = 1
-    cols = 1000
+    rows = 32
+    cols = 32
     clear_console()
 
+    
+
+    #initial generations
+    current_generation = create_initial_grid(rows, cols)
+    next_generation = create_initial_grid(rows, cols)
+
     # Get the number of generations that the A Firing Brain should run for
-    iterations = 4000
+    iterations = 3000
     layers = 10
-    qp_values = 21
-    prop_values = 21
+    qp_values = 11
+    prop_values = 11
     qlist = np.around(np.linspace(0, 0.1, qp_values), decimals=5)
-    plist = np.around(np.linspace(0, 0.001, qp_values), decimals=5)
+    plist = np.around(np.linspace(0, 0.01, qp_values), decimals=5)
+    rlist = np.around(np.linspace(0, 0.1, qp_values), decimals=5)
     #lists for tracking statistics
     hm = np.zeros((prop_values-1, qp_values))
     proportions = np.around(np.linspace(0, 1, prop_values), decimals=3)
     proportions = proportions[1:]
-    print("calculating\n")
-    for k, q in enumerate(qlist):
+    print("calculating...\n")
+    for k, p in enumerate(plist):
+        print(f"({k+1}/{qp_values})k. lager: ", end="")
         for i in range(layers):
+            print(f"{i+1} ", end="")
             #initial generations
             current_generation = create_initial_grid(rows, cols)
             next_generation = create_initial_grid(rows, cols)
@@ -261,35 +262,10 @@ def run_game():
             proportion = state_count(rows, cols, current_generation, 1)/(rows*cols)
             ind = prop_values-(np.searchsorted(proportions, proportion)+2)
             hm[ind, k] += 1
-    ax = sns.heatmap(hm, xticklabels=qlist, yticklabels=np.flip(proportions))
+        print("")
+    ax = sns.heatmap(hm, xticklabels=plist, yticklabels=np.flip(proportions))
     plt.show()
-
-
     return input("<Enter> to exit or r to run again: ")
-    """
-    elif runtype == 2:
-        generations =1000
-        firing = [0]*generations
-        iterations = 100
-        for i in range(iterations):
-            print(f"iteration {i}\n")
-            current_generation = create_initial_grid(rows, cols)
-            next_generation = create_initial_grid(rows, cols)
-            # Run A Firing Brain sequence
-            for gen in range(1, generations + 1):
-                create_next_grid(rows, cols, current_generation, next_generation)
-                current_generation, next_generation = next_generation, current_generation
-                firing[gen-1] += firing_count(rows, cols, current_generation)
-                #firing[gen-1] += current_generation.count(1)
-                #print(f'current count = {current_generation.count(1)}\n')
-        #firing /= 100
-        firing = [i/iterations for i in firing]
-        plt.plot(range(500), firing)
-        plt.show()
-
-
-
-        return input("<Enter> to exit or r to run again: ")"""
 
     
 
