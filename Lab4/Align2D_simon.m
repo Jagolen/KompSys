@@ -8,7 +8,7 @@ close all
 
 %Set up movie
 fig=figure;
-makemovie=1;
+makemovie=0;
 %movien = avifile('Vicsekmovie','FPS',3,'compression','none')
 
 J=100; %Number of timestep t0 be used
@@ -46,8 +46,9 @@ T=zeros(N,J+1);
 T(:,1)=2*pi*rand(N,1); %define initial direction of all particles
 
 D=zeros(N,N); %neigbors of every particle
+D_ingroup=zeros(N,N);
 
-closeness = zeros(1,J);
+closeness = zeros(1,J,'double');
      
 %For all time steps
 for j=1:J
@@ -65,10 +66,12 @@ for j=1:J
         A(:,8)=((x(i,j)-x(:,j)-L).^2+(y(i,j)-y(:,j)+L).^2).^0.5;
         A(:,9)=((x(i,j)-x(:,j)-L).^2+(y(i,j)-y(:,j)-L).^2).^0.5;
         
-        closeness(j) = sum(min(A,[],2))/N;  %for closeness score
         
-        D(i,:) = sum((1<A<r2)');  % cannot move towards each other if too close
-
+        %closeness(j) = sum(min(A,[],2))/N;  %for closeness score
+        A_tw = A>1&A<r2;
+        A_ingroup = A<3;
+        D(i,:) = sum(A_tw')';  % cannot move towards each other if too close
+        D_ingroup(i,:) = sum(A_ingroup')';
         A_nb = A<=r;
         B=sum(A_nb')';   
 
@@ -80,8 +83,12 @@ for j=1:J
         T(i,j)=S+e*(rand-0.5); %adds noise to the measured angle
      
     end
-    closeness(j)=closeness(j)/closeness(1);
-    B1=sum(D');  %amount of neigbors for every particle.
+
+    B1=sum(D);  %amount of neigbors for every particle.
+    B2=sum(D_ingroup);
+    closeness(j)=sum(B2);
+    closeness(j)=closeness(j)/(N*N);
+    disp(closeness(j));
     for f=1:N
         % find the negbors with most neigbors
         D(f,:) = B1.*D(f,:);
@@ -110,12 +117,13 @@ for j=1:J
         % Update positions
         x(f,j+1)=x(f,j)+v*cos(T(f,j+1)); %updates the particles' x-coordinates
         y(f,j+1)=y(f,j)+v*sin(T(f,j+1)); %updates the particles' y coordinates
-
+        
         % Jumps from the right of the box to the left or vice versa
         x(f,j+1)=mod(x(f,j+1),L);
 
         %Jumps from the top of the box to the bottom or vice versa
         y(f,j+1)=mod(y(f,j+1),L);
+        
 
         %Plot particles
 
@@ -128,7 +136,7 @@ for j=1:J
                 xlabel('X position')
                 ylabel('Y position')
             end
-        end   
+        end
     end
         
         
