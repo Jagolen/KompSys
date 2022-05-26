@@ -11,18 +11,18 @@ fig=figure;
 makemovie=0;
 %movien = avifile('Vicsekmovie','FPS',3,'compression','none')
 
-J=100; %Number of timestep t0 be used
+J=1000; %Number of timestep t0 be used
 UJ=0;   %Rate at which film is updated
 
 
-t=1/J %Size of one time step
+t=1 %Size of one time step
 
 N=60 %Number of particles
 
 e=0.5 %e is eta the noise parameter, whose maximum value is 2*pi
 
 r=1     % radius for where the particles get a common direction
-r2=3    % radius where the particles move towards each other
+r2=10    % radius where the particles move towards each other
 
 
 
@@ -88,7 +88,7 @@ for j=1:J
     B2=sum(D_ingroup);
     closeness(j)=sum(B2);
     closeness(j)=closeness(j)/(N*N);
-    disp(closeness(j));
+    %disp(closeness(j));
     for f=1:N
         % find the negbors with most neigbors
         D(f,:) = B1.*D(f,:);
@@ -108,7 +108,8 @@ for j=1:J
         tc=possible_sin(to_index);
         
         % normalize distances
-        S=[ts tc]./(ts^2+tc^2)^0.5*turn_rate;
+        epsilon = 0.000001;    %to never divide by 0
+        S=[ts tc]./(ts^2+tc^2+epsilon)^0.5*turn_rate;
         % setting new angle that is a mix of the old angle and...
         % the angle towards the neigbor with most neigbors
         T(f,j+1)=atan2(S(1)+sin(T(f,j)),S(2)+cos(T(f,j)))+e*(rand-0.5); %straight towards neighbor with most negbors
@@ -126,7 +127,6 @@ for j=1:J
         
 
         %Plot particles
-
         if makemovie
             if abs(x(f,j)-x(f,j+1))<v && abs(y(f,j)-y(f,j+1))<v
                 plot([x(f,j), x(f,j+1)] ,[y(f,j),y(f,j+1)],'k-','markersize',4) %plots the first half of the particles in black
@@ -150,7 +150,7 @@ for j=1:J
 end
 
 if ~ makemovie
-    plot(linspace(0,1,J), closeness)
+    plot(linspace(0,J,J), closeness)
 end
 
      
