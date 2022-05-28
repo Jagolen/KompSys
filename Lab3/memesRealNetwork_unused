@@ -11,6 +11,12 @@ G3 = nx.Graph(G2)
 G3.remove_edges_from(nx.selfloop_edges(G3))
 G3.remove_nodes_from(list(nx.isolates(G3)))
 G4 = nx.convert_node_labels_to_integers(G3)
-print(G4.nodes)
-n_node = list(G4.neighbors(60))
-print(n_node)
+num_neighbors = G3.number_of_nodes()
+
+nr_nodes = 0
+for i in G4.nodes:
+    nr_nodes += len(list(G4.neighbors(i)))
+print(nr_nodes/999)
+
+#n_node = list(G4.neighbors(60))
+#print(n_node)

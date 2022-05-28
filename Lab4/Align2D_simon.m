@@ -8,27 +8,27 @@ close all
 
 %Set up movie
 fig=figure;
-makemovie=1;
+makemovie=0;
 %movien = avifile('Vicsekmovie','FPS',3,'compression','none')
 
 J=100; %Number of timestep t0 be used
 UJ=0;   %Rate at which film is updated
 
 
-t=1/J %Size of one time step
+t=1/J; %Size of one time step
 
 N=60 %Number of particles
 
-e=0.5 %e is eta the noise parameter, whose maximum value is 2*pi
+e=0.5; %e is eta the noise parameter, whose maximum value is 2*pi
 
-r=1     % radius for where the particles get a common direction
-r2=3    % radius where the particles move towards each other
+r=1;     % radius for where the particles get a common direction
+r2=3;    % radius where the particles move towards each other
 
 
 
-L=20 %L is the size of the domain on which the particles can move
+L=20; %L is the size of the domain on which the particles can move
 
-v=0.5 %v is the speed at which the particles move
+v=0.5; %v is the speed at which the particles move
 
 turn_rate=1; %how hard the particles turn towards biggest groups
 

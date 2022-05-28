@@ -253,17 +253,18 @@ def run_game():
     #END CONNECT EVERYTHING
 
     n = nx.number_of_nodes(G)
-    p = 0.01
+    p = 0.001
     q = 0.01
-    r = 0
+    r = 0.01
 
     # Get the number of rows and columns for the A Firing Brain grid
     rows = 1
     cols = n
     clear_console()
+    print(f'N = {n}')
 
     # Get the number of generations that the A Firing Brain should run for
-    iterations = 20000
+    iterations = 6000
 
     #initial generations
     current_generation = create_initial_grid(rows, cols)
@@ -285,6 +286,8 @@ def run_game():
         resting[gen] += state_count(rows, cols, current_generation, 0)
         sharing[gen] += state_count(rows, cols, current_generation, 1)
         bored[gen] += state_count(rows, cols, current_generation, 2)
+        if bored[gen] == 0:
+            exit(-1)
     print(f'bored persons: {bored[iterations-1]}\n')
     plt.plot(range(0,iterations), resting)
     plt.plot(range(0,iterations), sharing)

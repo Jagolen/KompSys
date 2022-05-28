@@ -19,7 +19,7 @@ t=1/J %Size of one time step
 
 N=40 %Number of particles
 
-e=2*pi %e is eta the noise parameter, whose maximum value is 2*pi
+e=0 %e is eta the noise parameter, whose maximum value is 2*pi
 
 r=1
 

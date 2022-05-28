@@ -228,9 +228,9 @@ def run_game():
     Asks the user for input to setup the A Firing Brain to run for a given number of generations.
     """
 
-    p = 0.007
-    q = 0.07
-    r = 0.04
+    p = 0.001
+    q = 0.1
+    r = 0.05
 
     # Get the number of rows and columns for the A Firing Brain grid
     rows = 70
@@ -238,7 +238,7 @@ def run_game():
     clear_console()
 
     # Get the number of generations that the A Firing Brain should run for
-    iterations = 10000
+    iterations = 500
 
     #initial generations
     current_generation = create_initial_grid(rows, cols)
