@@ -9,6 +9,9 @@ import math
 import argparse
 import sys
 import random
+import time
+import sys
+import os
 
 np.set_printoptions(suppress=True, linewidth=sys.maxsize, threshold=sys.maxsize)
 
@@ -110,7 +113,139 @@ def spawn_people(grid, N, M, num_people, people_pos, argument):
             grid[x_rand, y_rand] = 1
 
             # Person number, x & y start, x & y current 
-            people_pos.append([i+1, x_rand, y_rand, x_rand, y_rand])
+            people_pos.append([i, x_rand, y_rand, x_rand, y_rand])
+
+def move_people(grid, gridval, N, M, people_pos):
+
+    intended_move = []
+    next_grid = np.zeros([N,M])
+    for i in range(N):
+        for j in range(M):
+            if gridval[i,j] == 500:
+                next_grid[i,j] = 3
+            elif gridval[i,j] == 1:
+                next_grid[i,j] = 2
+    scared_factor = 0.00
+    for k in people_pos:
+        if random.random() < scared_factor:
+            pass
+        if k[3] == -1 and k[4] == -1:
+            pass
+        else:
+            current_pos = [k[3], k[4]]
+            score = gridval[k[3], k[4]]
+            best_pos = [k[3], k[4]]
+            for i in range(current_pos[0]-1, current_pos[0]+2):
+                for j in range(current_pos[1]-1, current_pos[1]+2):
+                    if i < 0 or j < 0 or i > N-1 or j > M-1:
+                        pass
+                    elif gridval[i,j] < score and grid[i,j] != 1:
+                        best_pos = [i,j]
+                        score = gridval[i,j]
+            intended_move.append([k[0], best_pos[0], best_pos[1]])
+    print(intended_move)
+    #for int_moves in intended_move:
+    while len(intended_move) != 0:
+        int_moves = intended_move[0]
+        conflicts = []
+        index = intended_move.index(int_moves)
+        xy = [int_moves[1], int_moves[2]]
+        conflicts.append(index)
+        for z in intended_move:
+            if (z[1] == xy[0] and z[2] == xy[1] and z != int_moves):
+                conf_index = intended_move.index(z)
+                conflicts.append(conf_index)
+        print(conflicts)
+        if len(conflicts) == 1:
+            #print("here")
+            people_pos[int_moves[0]][3] = int_moves[1]
+            people_pos[int_moves[0]][4] = int_moves[2]
+            intended_move.pop(conflicts[0])
+        else:
+            #print("there")S
+            nr_conflicts = len(conflicts)
+            chosen_person = random.randint(0,nr_conflicts-1)
+            people_pos[intended_move[chosen_person][0]][3] = intended_move[chosen_person][1]
+            people_pos[intended_move[chosen_person][0]][4] = intended_move[chosen_person][2]
+            for i in range(nr_conflicts, 0, -1):
+                intended_move.pop(conflicts[i])
+    for i in people_pos:
+        next_grid[i[3], i[4]] = 1
+    grid = next_grid
+    return grid
+
+
+def resize_console(rows, cols):
+    """
+    Re-sizes the console to the size of rows x columns
+    :param rows: Int - The number of rows for the console to re-size to
+    :param cols: Int - The number of columns for the console to re-size to
+    """
+
+    if sys.platform.startswith('win'):
+        command = "mode con: cols={0} lines={1}".format(cols + cols, rows + 5)
+        os.system(command)
+    elif sys.platform.startswith('linux'):
+        command = "\x1b[8;{rows};{cols}t".format(rows=rows + 3, cols=cols + cols)
+        sys.stdout.write(command)
+    elif sys.platform.startswith('darwin'):
+        command = "\x1b[8;{rows};{cols}t".format(rows=rows + 3, cols=cols + cols)
+        sys.stdout.write(command)
+    else:
+        print("Unable to resize terminal. Your operating system is not supported.\n\r")
+
+def clear_console():
+    """
+    Clears the console using a system command based on the user's operating system.
+    """
+
+    if sys.platform.startswith('win'):
+        os.system("cls")
+    elif sys.platform.startswith('linux'):
+        os.system("clear")
+    elif sys.platform.startswith('darwin'):
+        os.system("clear")
+    else:
+        print("Unable to clear terminal. Your operating system is not supported.\n\r")
+
+
+def print_grid(N, M, grid, time_step, people_pos):
+    """
+    Prints to console the A Firing Brain grid
+    :param rows: Int - The number of rows that the A Firing Brain grid has
+    :param cols: Int - The number of columns that the A Firing Brain grid has
+    :param grid: Int[][] - The list of lists that will be used to represent the A Firing Brain grid
+    :param generation: Int - The current generation of the A Firing Brain grid
+    """
+
+    #clear_console()
+
+    # A single output string is used to help reduce the flickering caused by printing multiple lines
+    output_str = ""
+
+    # Compile the output string together and then print it to console
+    output_str += "Time step {0} - To exit the program press <Ctrl-C>\n\r".format(time_step)
+    for row in range(N):
+        for col in range(M):
+            if grid[row,col] == 0:
+                output_str += ".  "
+            elif grid[row,col] == 1:
+                output_str += "@  "
+                #for pers in people_pos:
+                #    if pers[3] == row and pers[4] == col:
+                #        output_str += f"{pers[0]} ".zfill(3)
+            elif grid[row,col] == 3:
+                output_str += "□  "
+            else:
+                output_str += "_  "
+        output_str += "\n\r"
+    print(output_str, end=" ")
+    time.sleep(1)
+
+
+
+
+
 
 
 
@@ -210,24 +345,12 @@ def main():
         if args.ppl:
             num_people = int(args.ppl)
     
-
-    output_str = ""
-    for row in range(N):
-        for col in range(M):
-            if grid[row,col] == 0:
-                output_str += ".  "
-            elif grid[row,col] == 1:
-                for pers in people_pos:
-                    if pers[3] == row and pers[4] == col:
-                        output_str += f"{pers[0]} ".zfill(3)
-            elif grid[row,col] == 3:
-                output_str += "□  "
-            else:
-                output_str += "_  "
-        output_str += "\n\r"
-    print(output_str, end=" ")
-
-
+    #Starting grid
+    print_grid(N, M, grid, 0, people_pos)
+    for i in range(30):
+        grid = move_people(grid, gridval, N, M, people_pos)
+        print_grid(N, M, grid, i+1, people_pos)
+    print(people_pos)
 
 main()
     
