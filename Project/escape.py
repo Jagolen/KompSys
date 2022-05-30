@@ -5,6 +5,7 @@
 #Implementing model from: https://www.sciencedirect.com/science/article/pii/S0378437107003676
 
 from asyncio.windows_events import NULL
+from distutils.spawn import spawn
 from operator import index
 from turtle import left
 import numpy as np
@@ -128,9 +129,33 @@ def spawn_people(grid, N, M, num_people, people_pos, argument):
                 grid[x,y] = 1
                 people_pos.append([i, x, y, x, y])
                 i += 1
-        
+    
+    elif argument == 'dense_classroom':
+        xlist = [1, 2, 3, 6, 7, 8, 9, 12, 13, 14]
+        ylist = [5, 7, 9, 11, 13, 15, 17]        
+        i = 0
+        for y in ylist:
+            for x in xlist:
+                grid[x,y] = 1
+                people_pos.append([i, x, y, x, y])
+                i += 1
 
-def move_people(grid, gridval, N, M, people_pos, escape_time, time_step):
+    elif argument == 'single_obstacle':
+        for i in range(num_people):
+            valid_random_number = 0
+            while valid_random_number == 0:
+                x_rand = random.randint(1, N-2)
+                y_rand = random.randint(1, M-2)
+                if grid[x_rand, y_rand] == 0:
+                    valid_random_number = 1
+                else:
+                    valid_random_number = 0
+            grid[x_rand, y_rand] = 1
+
+            # Person number, x & y start, x & y current 
+            people_pos.append([i, x_rand, y_rand, x_rand, y_rand])
+
+def move_people(grid, gridval, N, M, people_pos, escape_time, time_step, scared_factor):
     intended_move = []
     next_grid = np.zeros([N,M])
     for i in range(N):
@@ -139,7 +164,6 @@ def move_people(grid, gridval, N, M, people_pos, escape_time, time_step):
                 next_grid[i,j] = 3
             elif gridval[i,j] == 1:
                 next_grid[i,j] = 2
-    scared_factor = 0.05
     for k in people_pos:
         if random.random() < scared_factor:
             continue
@@ -272,7 +296,7 @@ def print_grid(N, M, grid, time_step, people_pos):
                 output_str += "_  "
         output_str += "\n\r"
     print(output_str, end=" ")
-    time.sleep(0.4)
+    time.sleep(0.1)
 
 
 
@@ -295,6 +319,7 @@ def main():
     parser.add_argument('--furniture', dest='furn',required=False)
     parser.add_argument('--type', dest='t', required=False)
     parser.add_argument('--people',dest='ppl', required=False)
+    parser.add_argument('--mode', dest='mode_mode', required=False)
     args = parser.parse_args()
 
     #Manual input
@@ -371,7 +396,7 @@ def main():
     escape_time = []
     x = []
     y = []
-    num_people = 50
+    num_people = 30
 
     if args.t == 'std_empty':
         spawn_people(grid, N, M, num_people, people_pos, args.t)
@@ -379,26 +404,70 @@ def main():
     elif args.t == 'classroom':
         num_people = 50
         spawn_people(grid, N, M, num_people, people_pos, args.t)
+    
+    elif args.t == 'dense_classroom':
+        num_people = 70
+        spawn_people(grid, N, M, num_people, people_pos, args.t)
+    
+    elif args.t == 'single_obstacle':
+        spawn_people(grid, N, M, num_people, people_pos, args.t)
     else:
         if args.ppl:
             num_people = int(args.ppl)
     
-    #Starting grid
-    print_grid(N, M, grid, 0, people_pos)
-    i = 0
-    while True:
-        i+=1
-        grid, left_in_room = move_people(grid, gridval, N, M, people_pos, escape_time, i+1)
-        print_grid(N, M, grid, i+1, people_pos)
-        x.append(i)
-        y.append(left_in_room)
-        if left_in_room == 0:
-            break
-    print(escape_time)
-    print(f'All people has left the room after {i} timesteps.')
+    if args.mode_mode == 'single':
+        #Starting grid
+        scared_factor = 0.05
+        print_grid(N, M, grid, 0, people_pos)
+        i = 0
+        while True:
+            i+=1
+            grid, left_in_room = move_people(grid, gridval, N, M, people_pos, escape_time, i+1, scared_factor)
+            print_grid(N, M, grid, i+1, people_pos)
+            x.append(i)
+            y.append(left_in_room)
+            if left_in_room == 0:
+                break
+        print(escape_time)
+        print(f'All people has left the room after {i} timesteps.')
+        print(gridval)
+        plt.plot(x,y)
+        plt.show()
+    
+    elif args.mode_mode == 'scared_factor':
+        
 
-    plt.plot(x,y)
-    plt.show()
+
+        print("HERE")
+        scared_factor_list = [x/100 for x in range(0,91,1)]
+        for scared_factor in scared_factor_list:
+            time_partial = 0
+            nr_means = 15
+            for k in range(nr_means):
+                people_pos = []
+                escape_time = []
+                print(scared_factor)
+                if args.t == 'std_empty':
+                    spawn_people(grid, N, M, num_people, people_pos, args.t)
+                
+                elif args.t == 'classroom':
+                    num_people = 50
+                    spawn_people(grid, N, M, num_people, people_pos, args.t)
+                i = 0
+                while True:
+                    i+=1
+                    grid, left_in_room = move_people(grid, gridval, N, M, people_pos, escape_time, i+1, scared_factor)
+                    #print_grid(N, M, grid, 0, people_pos)
+                    if left_in_room == 0:
+                        break
+                time_partial += i/nr_means
+            x.append(scared_factor)        
+            y.append(time_partial)
+        plt.plot(x,y)
+        plt.xlabel('Scared Factor')
+        plt.ylabel('Time when everyone has left the room')
+        plt.show()  
+
 
 
 main()
