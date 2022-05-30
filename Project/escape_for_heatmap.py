@@ -129,6 +129,31 @@ def spawn_people(grid, N, M, num_people, people_pos, argument):
                 grid[x,y] = 1
                 people_pos.append([i, x, y, x, y])
                 i += 1
+    
+    elif argument == 'dense_classroom':
+        xlist = [1, 2, 3, 6, 7, 8, 9, 12, 13, 14]
+        ylist = [5, 7, 9, 11, 13, 15, 17]        
+        i = 0
+        for y in ylist:
+            for x in xlist:
+                grid[x,y] = 1
+                people_pos.append([i, x, y, x, y])
+                i += 1
+
+    elif argument == 'single_obstacle':
+        for i in range(num_people):
+            valid_random_number = 0
+            while valid_random_number == 0:
+                x_rand = random.randint(1, N-2)
+                y_rand = random.randint(1, M-2)
+                if grid[x_rand, y_rand] == 0:
+                    valid_random_number = 1
+                else:
+                    valid_random_number = 0
+            grid[x_rand, y_rand] = 1
+
+            # Person number, x & y start, x & y current 
+            people_pos.append([i, x_rand, y_rand, x_rand, y_rand])
         
 
 def move_people(grid, gridval, N, M, people_pos, escape_time, hp, time_step):
@@ -344,6 +369,9 @@ def main():
             grid[2, 19] = 2
             gridval[2, 19] = 1
             place_furniture(grid,gridval, N, M, args.t)
+        else:
+            print("bad argument")
+            exit
 
     else:
         #Put a door
@@ -367,11 +395,13 @@ def main():
                     counter_end += set_neighbor_val(gridval,x,y,N,M)
                 else:
                     counter_end += 1
-    print(gridval)
+    #print(gridval)
 
 
     hm_end = np.zeros((N,M))
-    for rounds in range(100):
+    start_frequenzy = np.zeros((N,M))
+    loops = 50
+    for rounds in range(loops):
         people_pos = []
         escape_time = []
         x = []
@@ -385,6 +415,9 @@ def main():
         elif args.t == 'classroom':
             num_people = 50
             spawn_people(grid, N, M, num_people, people_pos, args.t)
+        elif args.t == 'dense_classroom':
+            num_people = 70
+            spawn_people(grid, N, M, num_people, people_pos, args.t)
         else:
             if args.ppl:
                 num_people = int(args.ppl)
@@ -395,19 +428,22 @@ def main():
         while True:
             i+=1
             grid, left_in_room = move_people(grid, gridval, N, M, people_pos, escape_time, hm, i+1)
-            print_grid(N, M, grid, i+1, people_pos)
+            #print_grid(N, M, grid, i+1, people_pos)
             x.append(i)
             y.append(left_in_room)
             if left_in_room == 0:
                 break
-        print(escape_time)
-        print(f'All people has left the room after {i} timesteps.')
+        #print(escape_time)
+        #print(f'All people has left the room after {i} timesteps.')
         hm_end += hm
+        start_frequenzy += 1*(hm>0)
 
         #plt.plot(x,y)
         #plt.show()
-    hm_end = hm_end/10
-    ax = sns.heatmap(hm_end)
+    hm_end = hm_end/(start_frequenzy+0.000001)
+    hm_end = np.multiply(hm_end,1/(1*(gridval!=500)))
+    rev = sns.color_palette("viridis", as_cmap=True)
+    ax = sns.heatmap(hm_end, cmap=rev)
     plt.show()
 
 
