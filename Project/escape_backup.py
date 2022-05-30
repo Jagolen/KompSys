@@ -4,6 +4,7 @@
 
 #Implementing model from: https://www.sciencedirect.com/science/article/pii/S0378437107003676
 
+from asyncio.windows_events import NULL
 import numpy as np
 import math
 import argparse
@@ -116,7 +117,6 @@ def spawn_people(grid, N, M, num_people, people_pos, argument):
             people_pos.append([i, x_rand, y_rand, x_rand, y_rand])
 
 def move_people(grid, gridval, N, M, people_pos):
-
     intended_move = []
     next_grid = np.zeros([N,M])
     for i in range(N):
@@ -125,52 +125,57 @@ def move_people(grid, gridval, N, M, people_pos):
                 next_grid[i,j] = 3
             elif gridval[i,j] == 1:
                 next_grid[i,j] = 2
-    scared_factor = 0.00
+    scared_factor = 0.05
     for k in people_pos:
         if random.random() < scared_factor:
-            pass
-        if k[3] == -1 and k[4] == -1:
-            pass
+            continue
+        if not k[3]:
+            continue
+        if gridval[k[3], k[4]] == 1:
+            k[3] = NULL
+            k[4] = NULL
         else:
             current_pos = [k[3], k[4]]
             score = gridval[k[3], k[4]]
-            best_pos = [k[3], k[4]]
+            possible_pos = [[k[3], k[4]]]
             for i in range(current_pos[0]-1, current_pos[0]+2):
                 for j in range(current_pos[1]-1, current_pos[1]+2):
                     if i < 0 or j < 0 or i > N-1 or j > M-1:
                         pass
                     elif gridval[i,j] < score and grid[i,j] != 1:
-                        best_pos = [i,j]
+                        possible_pos = [[i,j]]
                         score = gridval[i,j]
-            intended_move.append([k[0], best_pos[0], best_pos[1]])
-    print(intended_move)
-    #for int_moves in intended_move:
+                    elif gridval[i,j] == score and grid[i,j] != 1:
+                        possible_pos.append([i,j])
+            
+            if len(possible_pos) == 1:
+                intended_move.append([k[0], possible_pos[0][0], possible_pos[0][1]])
+            else:
+                random_nr = random.randint(0, len(possible_pos)-1)
+                intended_move.append([k[0], possible_pos[random_nr][0], possible_pos[random_nr][1]])
     while len(intended_move) != 0:
         int_moves = intended_move[0]
         conflicts = []
         index = intended_move.index(int_moves)
-        xy = [int_moves[1], int_moves[2]]
         conflicts.append(index)
         for z in intended_move:
-            if (z[1] == xy[0] and z[2] == xy[1] and z != int_moves):
+            if (z[1] == int_moves[1] and z[2] == int_moves[2] and z != int_moves):
                 conf_index = intended_move.index(z)
                 conflicts.append(conf_index)
-        print(conflicts)
         if len(conflicts) == 1:
-            #print("here")
             people_pos[int_moves[0]][3] = int_moves[1]
             people_pos[int_moves[0]][4] = int_moves[2]
             intended_move.pop(conflicts[0])
         else:
-            #print("there")S
             nr_conflicts = len(conflicts)
             chosen_person = random.randint(0,nr_conflicts-1)
             people_pos[intended_move[chosen_person][0]][3] = intended_move[chosen_person][1]
             people_pos[intended_move[chosen_person][0]][4] = intended_move[chosen_person][2]
-            for i in range(nr_conflicts, 0, -1):
+            for i in range(nr_conflicts-1, -1, -1):
                 intended_move.pop(conflicts[i])
     for i in people_pos:
-        next_grid[i[3], i[4]] = 1
+        if i[3]:
+            next_grid[i[3], i[4]] = 1
     grid = next_grid
     return grid
 
@@ -230,10 +235,10 @@ def print_grid(N, M, grid, time_step, people_pos):
             if grid[row,col] == 0:
                 output_str += ".  "
             elif grid[row,col] == 1:
-                output_str += "@  "
-                #for pers in people_pos:
-                #    if pers[3] == row and pers[4] == col:
-                #        output_str += f"{pers[0]} ".zfill(3)
+                #output_str += "@  "
+                for pers in people_pos:
+                    if pers[3] == row and pers[4] == col:
+                        output_str += f"{pers[0]} ".zfill(3)
             elif grid[row,col] == 3:
                 output_str += "□  "
             else:

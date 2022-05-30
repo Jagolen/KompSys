@@ -4,6 +4,8 @@
 
 #Implementing model from: https://www.sciencedirect.com/science/article/pii/S0378437107003676
 
+from asyncio.windows_events import NULL
+from operator import index
 import numpy as np
 import math
 import argparse
@@ -116,7 +118,6 @@ def spawn_people(grid, N, M, num_people, people_pos, argument):
             people_pos.append([i, x_rand, y_rand, x_rand, y_rand])
 
 def move_people(grid, gridval, N, M, people_pos):
-
     intended_move = []
     next_grid = np.zeros([N,M])
     for i in range(N):
@@ -125,12 +126,15 @@ def move_people(grid, gridval, N, M, people_pos):
                 next_grid[i,j] = 3
             elif gridval[i,j] == 1:
                 next_grid[i,j] = 2
-    scared_factor = 1
+    scared_factor = 0.05
     for k in people_pos:
         if random.random() < scared_factor:
             continue
-        if k[3] == -1 and k[4] == -1:
+        if not k[3]:
             continue
+        if gridval[k[3], k[4]] == 1:
+            k[3] = NULL
+            k[4] = NULL
         else:
             current_pos = [k[3], k[4]]
             score = gridval[k[3], k[4]]
@@ -153,25 +157,37 @@ def move_people(grid, gridval, N, M, people_pos):
     while len(intended_move) != 0:
         int_moves = intended_move[0]
         conflicts = []
-        index = intended_move.index(int_moves)
-        conflicts.append(index)
+        conflicts.append(int_moves[0])
         for z in intended_move:
             if (z[1] == int_moves[1] and z[2] == int_moves[2] and z != int_moves):
-                conf_index = intended_move.index(z)
-                conflicts.append(conf_index)
+                conflicts.append(z[0])
         if len(conflicts) == 1:
             people_pos[int_moves[0]][3] = int_moves[1]
             people_pos[int_moves[0]][4] = int_moves[2]
-            intended_move.pop(conflicts[0])
+            intended_move.pop(0)
         else:
             nr_conflicts = len(conflicts)
             chosen_person = random.randint(0,nr_conflicts-1)
-            people_pos[intended_move[chosen_person][0]][3] = intended_move[chosen_person][1]
-            people_pos[intended_move[chosen_person][0]][4] = intended_move[chosen_person][2]
-            for i in range(nr_conflicts-1, -1, -1):
-                intended_move.pop(conflicts[i])
+            chosen_person = conflicts[chosen_person]
+            for z in intended_move:
+                if z[0] == chosen_person:
+                    people_pos[chosen_person][3] = z[1]
+                    people_pos[chosen_person][4] = z[2]
+            while conflicts:
+                z_index = 0
+                conflict = conflicts[0]
+                z = intended_move[z_index]
+                while True:
+                    if z[0] == conflict:
+                        intended_move.remove(z)
+                        conflicts.remove(conflict)
+                        break
+                    else:
+                        z_index+=1
+                        z = intended_move[z_index]
     for i in people_pos:
-        next_grid[i[3], i[4]] = 1
+        if i[3]:
+            next_grid[i[3], i[4]] = 1
     grid = next_grid
     return grid
 
