@@ -6,6 +6,7 @@
 
 from asyncio.windows_events import NULL
 from operator import index
+from turtle import left
 import numpy as np
 import math
 import argparse
@@ -14,6 +15,7 @@ import random
 import time
 import sys
 import os
+import matplotlib.pyplot as plt
 
 np.set_printoptions(suppress=True, linewidth=sys.maxsize, threshold=sys.maxsize)
 
@@ -116,8 +118,19 @@ def spawn_people(grid, N, M, num_people, people_pos, argument):
 
             # Person number, x & y start, x & y current 
             people_pos.append([i, x_rand, y_rand, x_rand, y_rand])
+    
+    elif argument == 'classroom':
+        xlist = [1, 2, 3, 6, 7, 8, 9, 12, 13, 14]
+        ylist = [5, 8, 11, 14, 17]
+        i = 0
+        for y in ylist:
+            for x in xlist:
+                grid[x,y] = 1
+                people_pos.append([i, x, y, x, y])
+                i += 1
+        
 
-def move_people(grid, gridval, N, M, people_pos):
+def move_people(grid, gridval, N, M, people_pos, escape_time, time_step):
     intended_move = []
     next_grid = np.zeros([N,M])
     for i in range(N):
@@ -135,6 +148,7 @@ def move_people(grid, gridval, N, M, people_pos):
         if gridval[k[3], k[4]] == 1:
             k[3] = NULL
             k[4] = NULL
+            escape_time.append([k[0], time_step])
         else:
             current_pos = [k[3], k[4]]
             score = gridval[k[3], k[4]]
@@ -175,21 +189,22 @@ def move_people(grid, gridval, N, M, people_pos):
                     people_pos[chosen_person][4] = z[2]
             while conflicts:
                 z_index = 0
-                conflict = conflicts[0]
                 z = intended_move[z_index]
                 while True:
-                    if z[0] == conflict:
+                    if z[0] == conflicts[0]:
                         intended_move.remove(z)
-                        conflicts.remove(conflict)
+                        conflicts.remove(conflicts[0])
                         break
                     else:
                         z_index+=1
                         z = intended_move[z_index]
+    left_in_room = 0
     for i in people_pos:
         if i[3]:
             next_grid[i[3], i[4]] = 1
+            left_in_room += 1
     grid = next_grid
-    return grid
+    return grid, left_in_room
 
 
 def resize_console(rows, cols):
@@ -235,7 +250,7 @@ def print_grid(N, M, grid, time_step, people_pos):
     :param generation: Int - The current generation of the A Firing Brain grid
     """
 
-    #clear_console()
+    clear_console()
 
     # A single output string is used to help reduce the flickering caused by printing multiple lines
     output_str = ""
@@ -257,7 +272,7 @@ def print_grid(N, M, grid, time_step, people_pos):
                 output_str += "_  "
         output_str += "\n\r"
     print(output_str, end=" ")
-    time.sleep(1)
+    time.sleep(0.4)
 
 
 
@@ -353,9 +368,15 @@ def main():
     print(gridval)
 
     people_pos = []
+    escape_time = []
+    x = []
+    y = []
     num_people = 50
 
     if args.t == 'std_empty':
+        spawn_people(grid, N, M, num_people, people_pos, args.t)
+    
+    elif args.t == 'classroom':
         num_people = 50
         spawn_people(grid, N, M, num_people, people_pos, args.t)
     else:
@@ -364,10 +385,21 @@ def main():
     
     #Starting grid
     print_grid(N, M, grid, 0, people_pos)
-    for i in range(30):
-        grid = move_people(grid, gridval, N, M, people_pos)
+    i = 0
+    while True:
+        i+=1
+        grid, left_in_room = move_people(grid, gridval, N, M, people_pos, escape_time, i+1)
         print_grid(N, M, grid, i+1, people_pos)
-    print(people_pos)
+        x.append(i)
+        y.append(left_in_room)
+        if left_in_room == 0:
+            break
+    print(escape_time)
+    print(f'All people has left the room after {i} timesteps.')
+
+    plt.plot(x,y)
+    plt.show()
+
 
 main()
     
