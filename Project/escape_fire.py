@@ -41,7 +41,7 @@ def put_walls(grid, gridval, N, M):
         gridval[0,i] = 500
 
 def set_neighbor_val(gridval,x,y,N,M):
-    if gridval[x,y] == 500:
+    if gridval[x,y] == 500 or gridval[x,y] == 100:
         return 0
     else:
         res = 0
@@ -52,7 +52,7 @@ def set_neighbor_val(gridval,x,y,N,M):
                     res += 0
                 elif gridval[i,j] < gridval[x,y] and gridval[i,j] > 0:
                     res += 0
-                elif gridval[i,j] == 500:
+                elif gridval[i,j] == 500 or gridval[x,y] == 100:
                     res += 0
                 else:
                     if i == x or j == y:
@@ -152,7 +152,7 @@ def spawn_people(grid, N, M, num_people, people_pos, argument):
             people_pos.append([i, x_rand, y_rand, x_rand, y_rand])
 
 def place_fire(grid, gridval, N, M):
-    xlist = [1]
+    xlist = [8]
     ylist = [10]
     for x in xlist:
         for y in ylist:
@@ -171,7 +171,7 @@ def fire_spread(grid, gridval, N, M):
             elif gridval[i,j] == 100:
                 next_grid[i,j] = 4
 
-    spread_rate = 0.2
+    spread_rate = 0.05
     #Iterate over fire cells and create new fire
     for i in range(N):
         for j in range(M):
@@ -199,9 +199,9 @@ def fire_spread(grid, gridval, N, M):
     return grid, gridval
 
 
-def move_people(grid, gridval, N, M, people_pos, escape_time, time_step, scared_factor):
+def move_people(grid, gridval, N, M, people_pos, escape_time, dead_time, time_step, scared_factor):
 
-    fire_spread(grid, gridval,N,M)
+    fire_spread(grid,gridval,N,M)
     intended_move = []
     next_grid = np.zeros([N,M])
     for i in range(N):
@@ -215,15 +215,17 @@ def move_people(grid, gridval, N, M, people_pos, escape_time, time_step, scared_
     for k in people_pos:
         if random.random() < scared_factor:
             continue
-        elif k[3] == -1 and k[4] == -1:
+        elif (k[3] == -1 and k[4] == -1) or (k[3] == -1 and k[4] == -1):
             continue
         elif gridval[k[3], k[4]] == 1:
             k[3] = -1
             k[4] = -1
             escape_time.append([k[0], time_step])
         elif gridval[k[3], k[4]] == 100:
-            k[3] = -1
-            k[4] = -1
+            k[3] = -2
+            k[4] = -2
+            dead_time.append([k[0], time_step])
+
         else:
             current_pos = [k[3], k[4]]
             score = gridval[k[3], k[4]]
@@ -277,7 +279,7 @@ def move_people(grid, gridval, N, M, people_pos, escape_time, time_step, scared_
     
     left_in_room = 0
     for i in people_pos:
-        if i[3] != -1 and i[4] != -1:
+        if (i[3] != -1 and i[4] != -1) and (i[3] != -2 and i[4] != -2):
             next_grid[i[3], i[4]] = 1
             left_in_room += 1
     grid = next_grid
@@ -351,7 +353,7 @@ def print_grid(N, M, grid, time_step, people_pos):
                 output_str += "_  "
         output_str += "\n\r"
     print(output_str, end=" ")
-    time.sleep(1)
+    time.sleep(0.4)
 
 
 
@@ -434,8 +436,7 @@ def main():
         if args.furn:
             place_furniture(grid,gridval, N, M, args.furn)
 
-    if args.fire:
-        place_fire(grid, gridval, N, M)
+
 
 
     # Get the values of every square
@@ -452,6 +453,7 @@ def main():
 
     people_pos = []
     escape_time = []
+    dead_time = []
     x = []
     y = []
     num_people = 30
@@ -472,21 +474,33 @@ def main():
     else:
         if args.ppl:
             num_people = int(args.ppl)
-    
+
+    if args.fire:
+        place_fire(grid, gridval, N, M)
+
     if args.mode_mode == 'single':
         #Starting grid
         scared_factor = 0.05
         print_grid(N, M, grid, 0, people_pos)
         i = 0
         while True:
+            while counter_end !=0:
+                counter_end = 0
+                for x in range(N):
+                    for y in range(M):
+                        if gridval[x,y] != 0:
+                            counter_end += set_neighbor_val(gridval,x,y,N,M)
+                        else:
+                            counter_end += 1
             i+=1
-            grid, left_in_room = move_people(grid, gridval, N, M, people_pos, escape_time, i+1, scared_factor)
+            grid, left_in_room = move_people(grid, gridval, N, M, people_pos, escape_time, dead_time, i+1, scared_factor)
             print_grid(N, M, grid, i+1, people_pos)
             x.append(i)
             y.append(left_in_room)
-            if left_in_room == 0:
+            if len(escape_time) + len(dead_time) == num_people:
                 break
         print(escape_time)
+        print(dead_time)
         print(f'All people has left the room after {i} timesteps.')
         print(gridval)
         plt.plot(x,y)
@@ -547,60 +561,60 @@ def main():
         door_pos.append([0,2])
         door_pos.append([0,1])
   
-    xx = []
-    yy = []
-    parts = 30
-    for k in range(8, 30):
-        print(k)
-        partial_time = 0
-        for partial in range(parts):
+        xx = []
+        yy = []
+        parts = 30
+        for k in range(8, 30):
+            print(k)
+            partial_time = 0
+            for partial in range(parts):
 
-            chosen_door_pos = door_pos[k]
-            # Grid of objects: 0 = empty, 1 = person, 2 = door, 3 = wall/furniture, 4 = fire
-            grid = np.zeros([N,M])
+                chosen_door_pos = door_pos[k]
+                # Grid of objects: 0 = empty, 1 = person, 2 = door, 3 = wall/furniture, 4 = fire
+                grid = np.zeros([N,M])
 
-            #Value of the squares
-            gridval = np.zeros([N,M])
+                #Value of the squares
+                gridval = np.zeros([N,M])
 
-            #Put walls around the grid
-            put_walls(grid, gridval, N, M)
+                #Put walls around the grid
+                put_walls(grid, gridval, N, M)
 
-            grid[chosen_door_pos[0], chosen_door_pos[1]] = 2
-            gridval[chosen_door_pos[0], chosen_door_pos[1]] = 1  
+                grid[chosen_door_pos[0], chosen_door_pos[1]] = 2
+                gridval[chosen_door_pos[0], chosen_door_pos[1]] = 1  
 
-            place_furniture(grid,gridval, N, M, args.t)
+                place_furniture(grid,gridval, N, M, args.t)
 
-            # Get the values of every square
-            counter_end = 1
-            while counter_end !=0:
-                counter_end = 0
-                for x in range(N):
-                    for y in range(M):
-                        if gridval[x,y] != 0:
-                            counter_end += set_neighbor_val(gridval,x,y,N,M)
-                        else:
-                            counter_end += 1
-            #print(gridval)
+                # Get the values of every square
+                counter_end = 1
+                while counter_end !=0:
+                    counter_end = 0
+                    for x in range(N):
+                        for y in range(M):
+                            if gridval[x,y] != 0:
+                                counter_end += set_neighbor_val(gridval,x,y,N,M)
+                            else:
+                                counter_end += 1
+                #print(gridval)
 
-            people_pos = []
-            escape_time = []
-            num_people = 50
-            scared_factor = 0.05
-            spawn_people(grid, N, M, num_people, people_pos, args.t)
-            i = 0
-            while True:
-                i+=1
-                grid, left_in_room = move_people(grid, gridval, N, M, people_pos, escape_time, i+1, scared_factor)
-                #print_grid(N, M, grid, i, people_pos)
-                if left_in_room == 0:
-                    break
-            partial_time += i
-        xx.append(door_pos.index(chosen_door_pos))        
-        yy.append(partial_time/parts)
-    plt.plot(xx,yy)
-    plt.xlabel('Scared Factor')
-    plt.ylabel('Time when everyone has left the room')
-    plt.show()  
+                people_pos = []
+                escape_time = []
+                num_people = 50
+                scared_factor = 0.05
+                spawn_people(grid, N, M, num_people, people_pos, args.t)
+                i = 0
+                while True:
+                    i+=1
+                    grid, left_in_room = move_people(grid, gridval, N, M, people_pos, escape_time, i+1, scared_factor)
+                    #print_grid(N, M, grid, i, people_pos)
+                    if left_in_room == 0:
+                        break
+                partial_time += i
+            xx.append(door_pos.index(chosen_door_pos))        
+            yy.append(partial_time/parts)
+        plt.plot(xx,yy)
+        plt.xlabel('Scared Factor')
+        plt.ylabel('Time when everyone has left the room')
+        plt.show()  
 
 
 main()
