@@ -1,10 +1,6 @@
-test = [2, 3, 4]
-test1 = []
-test2 = []
+import matplotlib.pyplot as plt
 
-for i,j in test:
-    test1.append(i)
-    test2.append(j)
-
-print(test1)
-print(test2)
+xx = [1, 2, 3, 4]
+yy = [13, 46, 76, 89]
+yy2 = [15, 48, 78, 91]
+plt.show()
