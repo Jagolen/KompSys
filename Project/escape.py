@@ -4,6 +4,26 @@
 
 #Implementing model from: https://www.sciencedirect.com/science/article/pii/S0378437107003676
 
+#Usage: python escape.py --mode x --type y
+#Mode can be: 
+#single: a single run, with graphics
+#scared_factor: measure how escape time changes with scared factor
+#people: measure how escape time changes with number of people
+#door_pos: measure how escape time changes with door position
+#single_data: measure how the number of people in the room changes over time for both an empty room and the class room, ignores type
+
+#Type can be:
+
+#std_empty: an empty room
+#classroom: a classroom with 50 people
+#dense_classroom: a classroom with 70 people (unused in report)
+#single object: a room where people has to walk around a wall in the middle of an empty room (unused in report)
+
+
+
+
+
+
 from asyncio.windows_events import NULL
 from distutils.spawn import spawn
 from operator import index
@@ -299,24 +319,12 @@ def print_grid(N, M, grid, time_step, people_pos):
     time.sleep(0.5)
 
 
-
-
-
-
-
-
-
-
-"""def randomGrid(N):
-    returns a grid of NxN random values
-    return np.random.choice(vals, N*N, p=[0.3, 0.7, 0]).reshape(N, N) """
-
 def main():
     # Input parameters
     parser = argparse.ArgumentParser(description="Simulates evacuation from a room.")
-    parser.add_argument('--manual-size', dest='msz', required=False)
-    parser.add_argument('--doors', dest='door', required=False)
-    parser.add_argument('--furniture', dest='furn',required=False)
+    parser.add_argument('--manual-size', dest='msz', required=False) #Unused
+    parser.add_argument('--doors', dest='door', required=False) #Unused
+    parser.add_argument('--furniture', dest='furn',required=False) #Unused
     parser.add_argument('--type', dest='t', required=False)
     parser.add_argument('--people',dest='ppl', required=False)
     parser.add_argument('--mode', dest='mode_mode', required=False)
@@ -435,7 +443,7 @@ def main():
         plt.show()
     
     elif args.mode_mode == 'scared_factor':
-        scared_factor_list = [x/1000 for x in range(0,901,1)]
+        scared_factor_list = [x/100 for x in range(0,91,1)]
         for scared_factor in scared_factor_list:
             time_partial = 0
             nr_means = 20
