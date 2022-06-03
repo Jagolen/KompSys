@@ -4,6 +4,11 @@
 
 #Implementing model from: https://www.sciencedirect.com/science/article/pii/S0378437107003676
 
+
+#Usage: python escape.py --mode scared_factor --type classroom --fire 1
+#Produces a heatmap of how the fraction of dead people changes based on scared factor and fires spread
+
+
 import numpy as np
 import math
 import argparse
@@ -547,63 +552,65 @@ def main():
 
 
     elif args.mode_mode == 'scared_factor':
-        matrix_n = 11
-        matrix_m = 11
-        scared_factor_list = np.linspace(0,0.3,matrix_m)
-        fire_factor_list = np.linspace(0,0.3,matrix_n)
+        matrix_n = 21
+        matrix_m = 21
+        simulations = 10
+        scared_factor_list = np.linspace(0,0.8,matrix_m)
+        fire_factor_list = np.linspace(0,0.2,matrix_n)
         heatmap_matrix = np.zeros((matrix_n,matrix_n))
         for scared_index, scared_factor in enumerate(scared_factor_list):
             for fire_index, fire_factor in enumerate(fire_factor_list):
-                print_anything([scared_index,fire_index])
-                # Grid of objects: 0 = empty, 1 = person, 2 = door, 3 = wall/furniture, 4 = fire
-                grid = np.zeros([N,M])
+                for sims in range(simulations):
+                    print_anything([scared_index,fire_index])
+                    # Grid of objects: 0 = empty, 1 = person, 2 = door, 3 = wall/furniture, 4 = fire
+                    grid = np.zeros([N,M])
 
-                #Value of the squares
-                gridval = np.zeros([N,M])
+                    #Value of the squares
+                    gridval = np.zeros([N,M])
 
-                #Put walls around the grid
-                put_walls(grid, gridval, N, M)
-                
-                # doors
-                grid[15, 2] = 2
-                gridval[15, 2] = 1
-                grid[2, 19] = 2
-                gridval[2, 19] = 1
-                # benches
-                place_furniture(grid,gridval, N, M, args.t)
+                    #Put walls around the grid
+                    put_walls(grid, gridval, N, M)
+                    
+                    # doors
+                    grid[15, 2] = 2
+                    gridval[15, 2] = 1
+                    grid[2, 19] = 2
+                    gridval[2, 19] = 1
+                    # benches
+                    place_furniture(grid,gridval, N, M, args.t)
 
-                people_pos = []
-                escape_time = []
-                dead_time = []
-                xlist = [1, 2, 3, 6, 7, 8, 9, 12, 13, 14]
-                ylist = [5, 8, 11, 14, 17]
-                i = 0
-                for y in ylist:
-                    for x in xlist:
-                        grid[x,y] = 1
-                        people_pos.append([i, x, y, x, y])
-                        i += 1
-                x = []
-                y = []
-                i = 0
-                
-                if args.fire:
-                    place_fire(grid, gridval, N, M)
-                #print_grid(N, M, grid, 0, people_pos)
-                while True:
+                    people_pos = []
+                    escape_time = []
+                    dead_time = []
+                    xlist = [1, 2, 3, 6, 7, 8, 9, 12, 13, 14]
+                    ylist = [5, 8, 11, 14, 17]
+                    i = 0
+                    for y in ylist:
+                        for x in xlist:
+                            grid[x,y] = 1
+                            people_pos.append([i, x, y, x, y])
+                            i += 1
+                    x = []
+                    y = []
+                    i = 0
+                    
+                    if args.fire:
+                        place_fire(grid, gridval, N, M)
                     #print_grid(N, M, grid, 0, people_pos)
-                    next_gridval = np.zeros([16,20])
-                    for n in range(N):
-                        for m in range(M):
-                            if grid[n,m] == 3 or grid[n,m] == 4 or gridval[n,m] == 1:
-                                next_gridval[n,m] = gridval[n,m]
-                    update_val(grid,next_gridval,N,M)
-                    gridval = next_gridval
-                    i+=1
-                    grid, left_in_room = move_people(grid, gridval, N, M, people_pos, escape_time, dead_time, i+1, scared_factor, fire_factor)
-                    if len(escape_time) + len(dead_time) == num_people:
-                        heatmap_matrix[fire_index,scared_index]=float(len(dead_time))/num_people
-                        break
+                    while True:
+                        #print_grid(N, M, grid, 0, people_pos)
+                        next_gridval = np.zeros([16,20])
+                        for n in range(N):
+                            for m in range(M):
+                                if grid[n,m] == 3 or grid[n,m] == 4 or gridval[n,m] == 1:
+                                    next_gridval[n,m] = gridval[n,m]
+                        update_val(grid,next_gridval,N,M)
+                        gridval = next_gridval
+                        i+=1
+                        grid, left_in_room = move_people(grid, gridval, N, M, people_pos, escape_time, dead_time, i+1, scared_factor, fire_factor)
+                        if len(escape_time) + len(dead_time) == num_people:
+                            heatmap_matrix[fire_index,scared_index]+=(float(len(dead_time))/num_people) / simulations
+                            break
         ax = sns.heatmap(heatmap_matrix)
         ax.set_xlabel("scared_index")
         ax.set_ylabel("fire_factor")
