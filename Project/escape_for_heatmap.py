@@ -4,6 +4,9 @@
 
 #Implementing model from: https://www.sciencedirect.com/science/article/pii/S0378437107003676
 
+# To use create a heatmap you can use the comman >> Python escape_for_heatmap.py --type (std_empty/classroom/dense_classroom)
+# how many loops the program runs can be changed on row 408
+
 from asyncio.windows_events import NULL
 from operator import index
 from turtle import left
@@ -84,6 +87,7 @@ def place_furniture(grid, gridval, N, M, type):
             for y in ylist:
                 gridval[x,y] = 500
                 grid[x,y] = 3
+
     elif type == 'single_obstacle':
         xlist = [5, 6, 7, 8, 9, 10, 11]
         ylist = [4]
@@ -305,8 +309,9 @@ def print_grid(N, M, grid, time_step, people_pos):
 
 
 
-
-
+""" prints how many loops has gone by """
+def print_loops(loops):
+    print(loops)
 
 
 
@@ -400,7 +405,7 @@ def main():
 
     hm_end = np.zeros((N,M))
     start_frequenzy = np.zeros((N,M))
-    loops = 50
+    loops = 20
     for rounds in range(loops):
         people_pos = []
         escape_time = []
@@ -409,7 +414,7 @@ def main():
         num_people = 50
         hm = np.zeros((N,M))
 
-        if args.t == 'std_empty':
+        if args.t == 'std_empty' or args.t == 'single_obstacle':
             spawn_people(grid, N, M, num_people, people_pos, args.t)
 
         elif args.t == 'classroom':
@@ -421,9 +426,12 @@ def main():
         else:
             if args.ppl:
                 num_people = int(args.ppl)
+                
 
         #Starting grid
         print_grid(N, M, grid, 0, people_pos)
+        if(rounds%10==0):
+            print_loops(rounds)
         i = 0
         while True:
             i+=1
@@ -444,6 +452,9 @@ def main():
     hm_end = np.multiply(hm_end,1/(1*(gridval!=500)))
     rev = sns.color_palette("viridis", as_cmap=True)
     ax = sns.heatmap(hm_end, cmap=rev)
+    ax.set_xlabel("column position")
+    ax.set_ylabel("row position")
+    ax.set_title("Escape time heatmap for single_obstacle")
     plt.show()
 
 

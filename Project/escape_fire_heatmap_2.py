@@ -4,6 +4,9 @@
 
 #Implementing model from: https://www.sciencedirect.com/science/article/pii/S0378437107003676
 
+# To run this code for the survival probability for each starting position you use >> python escape_fire_heatmap_2.py --type classroom --mode dead_positions --fire 1
+# How many loops are done can be change on row 619
+
 import numpy as np
 import math
 import argparse
@@ -189,7 +192,7 @@ def spawn_people(grid, N, M, num_people, people_pos, argument):
 
 def place_fire(grid, gridval, N, M):
     xlist = [7]
-    ylist = [4]
+    ylist = [16]
     for x in xlist:
         for y in ylist:
             gridval[x,y] = 100
@@ -613,7 +616,7 @@ def main():
         plt.show()
 
     elif args.mode_mode == 'dead_positions':
-        rounds=2000
+        rounds=500
         fire_factor=0.05
         scared_factor=0.05
         hm=np.zeros((N,M),float)
@@ -676,6 +679,9 @@ def main():
         put_walls(grid, gridval, N, M)
         # benches
         place_furniture(grid,gridval, N, M, args.t)
+        # doors
+        gridval[15, 2] = 1
+        gridval[2, 19] = 1
         hm = np.multiply(hm,1/(1*(gridval!=500)))
         ax = sns.heatmap(hm/rounds)
         ax.set_xlabel("column position")
