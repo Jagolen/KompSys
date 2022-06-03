@@ -4,6 +4,22 @@
 
 #Implementing model from: https://www.sciencedirect.com/science/article/pii/S0378437107003676
 
+#Usage: python escape.py --mode x --type y --fire z
+#Mode can be: 
+#single: a single run, with graphics
+#scared_factor: measure how the amount of dead or alived people changes with scared factor
+#fire_spread: measure how the amount of dead or alive people changes with fire spread rate
+
+#Type can be:
+
+#std_empty: an empty room
+#classroom: a classroom with 50 people
+#dense_classroom: a classroom with 70 people (unused in report)
+#single object: a room where people has to walk around a wall in the middle of an empty room (unused in report)
+
+#Fire can be anything, as long as the fire argument is active, a fire will spaen in the room
+
+
 import numpy as np
 import math
 import argparse
